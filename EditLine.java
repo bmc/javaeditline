@@ -2,36 +2,71 @@ package org.clapper.editline;
 
 public class EditLine
 {
+    /*----------------------------------------------------------------------*\
+                            Instance Variables
+    \*----------------------------------------------------------------------*/
+
+    private static final String INITIAL_PROMPT = "? ";
+    private boolean initialized = false;
+    private CompletionHandler completionHandler = null;
+
+    /*----------------------------------------------------------------------*\
+                           Static Initialization
+    \*----------------------------------------------------------------------*/
+
     static
     {
         System.loadLibrary("EditLine");
     }
 
-    private String prompt = "? ";
-    private boolean initialized = false;
+    /*----------------------------------------------------------------------*\
+                               Inner Classes
+    \*----------------------------------------------------------------------*/
+
+    public interface CompletionHandler
+    {
+        public String complete(String token, String line, int cursor);
+    }
+
+    /*----------------------------------------------------------------------*\
+                                Constructor
+    \*----------------------------------------------------------------------*/
 
     private EditLine()
     {
         initialized = true;
-        setPrompt(prompt);
     }
+
+    /*----------------------------------------------------------------------*\
+                                Destructor
+    \*----------------------------------------------------------------------*/
 
     protected void finalize()
     {
         cleanup();
     }
 
+    /*----------------------------------------------------------------------*\
+                              Static Methods
+    \*----------------------------------------------------------------------*/
+
     public static EditLine init(String program, String initFile)
     {
-        n_el_init(program);
+        EditLine editLine = new EditLine();
+        n_el_init(program, editLine);
         n_el_source(initFile);
-        return new EditLine();
+        editLine.setPrompt(INITIAL_PROMPT);
+        return editLine;
     }
 
     public static EditLine init(String program)
     {
         return init(program, null);
     }
+
+    /*----------------------------------------------------------------------*\
+                              Public Methods
+    \*----------------------------------------------------------------------*/
 
     public synchronized void cleanup()
     {
@@ -47,6 +82,21 @@ public class EditLine
                 initialized = false;
             }
         }
+    }
+
+    public CompletionHandler getCompletionHandler()
+    {
+        return completionHandler;
+    }
+
+    public void setCompletionHandler(CompletionHandler handler)
+    {
+        this.completionHandler = handler;
+    }
+
+    public void clearCompletionHandler()
+    {
+        setCompletionHandler(null);
     }
 
     public void setPrompt(String _prompt)
@@ -87,16 +137,6 @@ public class EditLine
         n_history_append(line);
     }
 
-    /**
-     * Get the editing information about the current line.
-     */
-    public LineInfo getLineInfo()
-    {
-        LineInfo info = new LineInfo();
-        n_el_get_lineinfo(info);
-        return info;
-    }
-
     public String[] getHistory()
     {
         return n_history_get_all();
@@ -104,14 +144,27 @@ public class EditLine
 
     public int historySize()
     {
+        System.out.println("in historySize()");
         return n_history_get_size();
     }
 
-    private native static void n_el_init(String program);
+    /*----------------------------------------------------------------------*\
+                              Private Methods
+    \*----------------------------------------------------------------------*/
+
+    public String handleCompletion(String token, String line, int cursor)
+    {
+        return "foo";
+    }
+
+    /*----------------------------------------------------------------------*\
+                              Native Methods
+    \*----------------------------------------------------------------------*/
+
+    private native static void n_el_init(String program, EditLine editLine);
     private native static void n_el_source(String path);
     private native static void n_el_end();
     private native static void n_el_set_prompt(String prompt);
-    private native static void n_el_get_lineinfo(LineInfo info);
     private native static String n_el_gets();
     private native static int n_history_get_size();
     private native static void n_history_set_size(int size);

@@ -1,7 +1,7 @@
 PLATFORM     = $(shell uname -s)
 CLASSDIR     = classes
 CLASS_PKGDIR = $(CLASSDIR)/org/clapper/editline
-CLASSES      = $(CLASS_PKGDIR)/LineInfo.class $(CLASS_PKGDIR)/EditLine.class
+CLASSES      = $(CLASS_PKGDIR)/EditLine.class
 
 ifeq "$(PLATFORM)" "Linux"
 
@@ -50,8 +50,6 @@ native: $(SOLIB)
 
 $(CLASS_PKGDIR)/EditLine.class: EditLine.java
 	$(JAVAC) -d $(CLASSDIR) -cp $(CLASSDIR) EditLine.java
-$(CLASS_PKGDIR)/LineInfo.class: LineInfo.java
-	$(JAVAC) -d $(CLASSDIR) -cp $(CLASSDIR) LineInfo.java
 
 $(SOLIB): org_clapper_editline_EditLine.o
 	$(CC) -o $(SOLIB) org_clapper_editline_EditLine.o $(LDFLAGS) 

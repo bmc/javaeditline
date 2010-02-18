@@ -3,6 +3,7 @@
 #include <histedit.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define min(a, b)  ((a) < (b) ? (a) : (b))
 
@@ -11,6 +12,10 @@
 typedef struct jEditLineData
 {
     char prompt[PROMPT_MAX];
+    JNIEnv *env;
+    jclass javaClass;
+    jobject javaEditLine;
+    jmethodID handleCompletionMethodID;
 }
 jEditLineData;
 
@@ -19,7 +24,7 @@ jEditLineData;
 static EditLine *editLineDesc = NULL;
 static History *historyDesc = NULL;
 
-static jEditLineData *getData()
+static jEditLineData *get_data()
 {
     void *d;
     el_get(editLineDesc, EL_CLIENTDATA, &d);
@@ -28,28 +33,105 @@ static jEditLineData *getData()
 
 static void set_prompt(const char *new_prompt)
 {
-    jEditLineData *data = getData();
+    jEditLineData *data = get_data();
     strncpy(data->prompt, new_prompt, PROMPT_MAX - 1);
 }
 
 static const char *get_prompt()
 {
-    jEditLineData *data = getData();
+    jEditLineData *data = get_data();
     return data->prompt;
+}
+
+static unsigned char complete(EditLine *el, int ch)
+{
+    jEditLineData *data = get_data();
+    JNIEnv *env = data->env;
+
+    const LineInfo *lineInfo = el_line(el);
+
+    jstring jLine;
+    jint jCursor;
+    jstring jToken;
+    
+    if (lineInfo != NULL)
+    {
+        jLine = (*env)->NewStringUTF(env, lineInfo->buffer);
+
+        /* Find the beginning of the current token */
+
+        const char *ptr;
+	for (ptr = lineInfo->cursor - 1;
+             (!isspace((unsigned char)*ptr)) && (ptr > lineInfo->buffer); ptr--)
+		continue;
+	int len = lineInfo->cursor - ptr;
+
+        /* Save it as a Java string. */
+
+        if (len == 0)
+            jToken = (*env)->NewStringUTF(env, "");
+
+        else
+        {
+            char *token = (char *) malloc(len + 1);
+            strncpy(token, ptr, len);
+            jToken = (*env)->NewStringUTF(env, "");
+            free(token);
+        }
+
+        jCursor = (long) (lineInfo->cursor - lineInfo->buffer);
+    }
+
+    else
+    {
+        jToken = (*env)->NewStringUTF(env, "");
+        jLine = (*env)->NewStringUTF(env, "");
+        jCursor = 0;
+    }
+
+    jmethodID method = data->handleCompletionMethodID;
+
+    unsigned char result = CC_ERROR;
+    jstring completion = (*env)->CallObjectMethod(env,
+                                                  data->javaEditLine,
+                                                  method,
+                                                  jToken,
+                                                  jLine,
+                                                  jCursor);
+
+    if (completion != NULL)
+    {
+        const char *str = (*env)->GetStringUTFChars(env, completion, NULL);
+        if (str == NULL)
+        {
+            puts("Out of memory (Java) during completion.");
+        }
+
+        else
+        {
+            result = CC_REFRESH;
+            el_insertstr(el, str);
+            (*env)->ReleaseStringUTFChars(env, completion, str);
+        }
+    }
+
+    return result;
 }
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static long n_el_init(String program);
+ * Method: static long n_el_init(String program, EditLine javaEditLine)
  */
 JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
-  (JNIEnv *env, jclass cls, jstring program)
+    (JNIEnv *env, jclass cls, jstring program, jobject javaEditLine)
 {
-    char cProgramName[128];
-    int totalChars = (*env)->GetStringLength(env, program);
-    int maxBuf = sizeof(cProgramName) - 1;
-    int total = min(totalChars, maxBuf);
-    (*env)->GetStringUTFRegion(env, program, 0, total, cProgramName);
+    const char *cProgram = (*env)->GetStringUTFChars(env, program, NULL);
+    if (cProgram == NULL)
+    {
+        /* OutOfMemoryError already thrown */
+        return;
+    }
+
     jEditLineData *data = (jEditLineData*) malloc(sizeof(jEditLineData));
 
     if (data == NULL)
@@ -60,18 +142,28 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
 
     else
     {
-        jclass exc = (*env)->FindClass(env, "java/lang/RuntimeException");
-        editLineDesc = el_init(cProgramName, stdin, stdout, stderr);
+        editLineDesc = el_init(cProgram, stdin, stdout, stderr);
         historyDesc = history_init();
-        if (el_set(editLineDesc, EL_CLIENTDATA, (void *) data) != 0)
-            (*env)->ThrowNew(env, exc, "Can't save local data with EditLine.");
-        else if (el_set(editLineDesc, EL_PROMPT, get_prompt) != 0)
-            (*env)->ThrowNew(env, exc, "Can't retrieve current prompt.");
-        else if (el_set(editLineDesc, EL_HIST, history, historyDesc) != 0)
-            (*env)->ThrowNew(env, exc, "Can't assign history function.");
-        else
-            set_prompt("? ");
+
+        data->env = env;
+        data->javaClass = (*env)->NewGlobalRef(env, cls);
+        data->javaEditLine = (*env)->NewGlobalRef(env, javaEditLine);
+        data->handleCompletionMethodID = (*env)->GetMethodID(
+            env, cls,
+            "handleCompletion",
+            "(Ljava/lang/String;Ljava/lang/String;I)Ljava/lang/String;");
+
+        if (data->handleCompletionMethodID != NULL)
+            el_set(editLineDesc, EL_ADDFN, "ed-complete", "Complete", complete);
+
+        el_set(editLineDesc, EL_CLIENTDATA, (void *) data);
+        el_set(editLineDesc, EL_PROMPT, get_prompt);
+        el_set(editLineDesc, EL_HIST, history, historyDesc);
+        el_set(editLineDesc, EL_SIGNAL, 1);
+
     }
+
+    (*env)->ReleaseStringUTFChars(env, program, cProgram);
 }
 
 /*
@@ -136,15 +228,6 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1set_1prompt
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static void n_el_get_lineinfo(long handle, LineInfo info)
- */
-JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1get_1lineinfo
-  (JNIEnv *env, jclass cls, jobject info)
-{
-}
-
-/*
- * Class:  org_clapper_editline_EditLine
  * Method: static String n_el_gets(long handle);
  */
 JNIEXPORT jstring JNICALL Java_org_clapper_editline_EditLine_n_1el_1gets
@@ -168,7 +251,9 @@ JNIEXPORT jint JNICALL Java_org_clapper_editline_EditLine_n_1history_1get_1size
   (JNIEnv *env, jclass cls)
 {
     HistEvent ev;
-    return (jint) history(historyDesc, &ev, H_GETSIZE);
+    int result = (jint) history(historyDesc, &ev, H_GETSIZE);
+    printf("%d ret=%d\n", ev.num, result);
+    return result;
 }
 
 /*
@@ -209,9 +294,9 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1append
     else
     {
         HistEvent ev;
+        ev.str = str;
+        printf("Adding \"%s\" to history.\n", str);
         history(historyDesc, &ev, H_ENTER, str);
-        printf("%d %s\n", ev.num, ev.str);
-
         (*env)->ReleaseStringUTFChars(env, line, str);
     }
 }
