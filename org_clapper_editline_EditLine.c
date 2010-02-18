@@ -71,9 +71,37 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
         editLineDesc = el_init(cProgramName, stdin, stdout, stderr);
         historyDesc = history_init();
         el_set(editLineDesc, EL_CLIENTDATA, (void *) data);
+        el_set(editLineDesc, EL_PROMPT, get_prompt);
         set_prompt("? ");
     }
 }
+
+/*
+ * Class:  org_clapper_editline_EditLine
+ * Method: static void n_el_source(String path);
+ */
+JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1source
+  (JNIEnv *env, jclass cls, jstring javaPath)
+{
+    if (javaPath == NULL)
+        el_source(editLineDesc, NULL);
+
+    else
+    {
+        const char *path = (*env)->GetStringUTFChars(env, javaPath, NULL);
+        if (path == NULL)
+        {
+            /* OutOfMemoryError already thrown */
+        }
+
+        else
+        {
+            el_source(editLineDesc, path);
+            (*env)->ReleaseStringUTFChars(env, javaPath, path);
+        }
+    }
+}
+
 
 /*
  * Class:  org_clapper_editline_EditLine

@@ -21,10 +21,16 @@ public class EditLine
         cleanup();
     }
 
-    public static EditLine init(String program)
+    public static EditLine init(String program, String initFile)
     {
         n_el_init(program);
+        n_el_source(initFile);
         return new EditLine();
+    }
+
+    public static EditLine init(String program)
+    {
+        return init(program, null);
     }
 
     public synchronized void cleanup()
@@ -50,7 +56,15 @@ public class EditLine
 
     public String getString()
     {
-        return n_el_gets();
+        String s = n_el_gets();
+        if (s != null)
+        {
+            int len = s.length();
+            if ((len > 0) && (s.charAt(len - 1) == '\n'))
+                s = s.substring(0, len - 1);
+        }
+
+        return s;
     }
 
     public void setHistorySize(int size)
@@ -88,15 +102,16 @@ public class EditLine
         return n_history_get_all();
     }
 
-    public native static void n_el_init(String program);
-    public native static void n_el_end();
-    public native static void n_el_set_prompt(String prompt);
-    public native static void n_el_get_lineinfo(LineInfo info);
-    public native static String n_el_gets();
-    public native static int n_history_get_size();
-    public native static void n_history_set_size(int size);
-    public native static void n_history_clear();
-    public native static void n_history_append(String line);
-    public native static String[] n_history_get_all();
+    private native static void n_el_init(String program);
+    private native static void n_el_source(String path);
+    private native static void n_el_end();
+    private native static void n_el_set_prompt(String prompt);
+    private native static void n_el_get_lineinfo(LineInfo info);
+    private native static String n_el_gets();
+    private native static int n_history_get_size();
+    private native static void n_history_set_size(int size);
+    private native static void n_history_clear();
+    private native static void n_history_append(String line);
+    private native static String[] n_history_get_all();
 }
 
