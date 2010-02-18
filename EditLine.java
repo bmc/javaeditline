@@ -102,6 +102,11 @@ public class EditLine
         return n_history_get_all();
     }
 
+    public int historySize()
+    {
+        return n_history_get_size();
+    }
+
     private native static void n_el_init(String program);
     private native static void n_el_source(String path);
     private native static void n_el_end();

@@ -1,4 +1,7 @@
-PLATFORM = $(shell uname -s)
+PLATFORM     = $(shell uname -s)
+CLASSDIR     = classes
+CLASS_PKGDIR = $(CLASSDIR)/org/clapper/editline
+CLASSES      = $(CLASS_PKGDIR)/LineInfo.class $(CLASS_PKGDIR)/EditLine.class
 
 ifeq "$(PLATFORM)" "Linux"
 
@@ -30,28 +33,32 @@ JAR      = $(JAVA_HOME)/bin/jar
 all: compile package
 
 clean:
-	rm -rf classes $(SOLIB) *.o *EditLine.h *.jar *.class
+	rm -rf $(CLASSDIR) $(SOLIB) *.o *EditLine.h *.jar *.class
 
 compile: java native
 
-package:
-	(cd classes; $(JAR) cf ../editline.jar org)
+package: jar
 
-java:	classes
+jar: editline.jar
 
-classes: classes/org/clapper/editline/LineInfo.class \
-         classes/org/clapper/editline/EditLine.class
+editline.jar: $(CLASSES)
+	(cd $(CLASSDIR); $(JAR) cf ../editline.jar org)
 
-classes/org/clapper/editline/EditLine.class: EditLine.java
-	$(JAVAC) -d classes -cp classes EditLine.java
-classes/org/clapper/editline/LineInfo.class: LineInfo.java
-	$(JAVAC) -d classes -cp classes LineInfo.java
+java:	$(CLASSES)
 
 native: $(SOLIB)
 
-$(SOLIB): org_clapper_editline_EditLine.c org_clapper_editline_EditLine.h
-	$(CC) $(INCLUDES) $(CFLAGS) -c org_clapper_editline_EditLine.c
+$(CLASS_PKGDIR)/EditLine.class: EditLine.java
+	$(JAVAC) -d $(CLASSDIR) -cp $(CLASSDIR) EditLine.java
+$(CLASS_PKGDIR)/LineInfo.class: LineInfo.java
+	$(JAVAC) -d $(CLASSDIR) -cp $(CLASSDIR) LineInfo.java
+
+$(SOLIB): org_clapper_editline_EditLine.o
 	$(CC) -o $(SOLIB) org_clapper_editline_EditLine.o $(LDFLAGS) 
 
-org_clapper_editline_EditLine.h: classes
-	$(JAVAH) -classpath classes -jni org.clapper.editline.EditLine
+org_clapper_editline_EditLine.o: org_clapper_editline_EditLine.c \
+                                 org_clapper_editline_EditLine.h
+	$(CC) $(INCLUDES) $(CFLAGS) -c org_clapper_editline_EditLine.c
+
+org_clapper_editline_EditLine.h: $(CLASS_PKGDIR)/EditLine.class
+	$(JAVAH) -classpath $(CLASSDIR) -jni org.clapper.editline.EditLine

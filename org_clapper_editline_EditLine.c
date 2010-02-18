@@ -55,24 +55,22 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
     if (data == NULL)
     {
         jclass exc = (*env)->FindClass(env, "java/lang/OutOfMemoryError");
-        if (exc == NULL)
-        {
-            /* Unable to find the exception class, give up. */
-        }
-
-        else
-        {
-            (*env)->ThrowNew(env, exc, "unable to allocation jEditLineData");
-        }
+        (*env)->ThrowNew(env, exc, "unable to allocation jEditLineData");
     }
 
     else
     {
+        jclass exc = (*env)->FindClass(env, "java/lang/RuntimeException");
         editLineDesc = el_init(cProgramName, stdin, stdout, stderr);
         historyDesc = history_init();
-        el_set(editLineDesc, EL_CLIENTDATA, (void *) data);
-        el_set(editLineDesc, EL_PROMPT, get_prompt);
-        set_prompt("? ");
+        if (el_set(editLineDesc, EL_CLIENTDATA, (void *) data) != 0)
+            (*env)->ThrowNew(env, exc, "Can't save local data with EditLine.");
+        else if (el_set(editLineDesc, EL_PROMPT, get_prompt) != 0)
+            (*env)->ThrowNew(env, exc, "Can't retrieve current prompt.");
+        else if (el_set(editLineDesc, EL_HIST, history, historyDesc) != 0)
+            (*env)->ThrowNew(env, exc, "Can't assign history function.");
+        else
+            set_prompt("? ");
     }
 }
 
@@ -211,7 +209,8 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1append
     else
     {
         HistEvent ev;
-        history(historyDesc, &ev, H_APPEND, str);
+        history(historyDesc, &ev, H_ENTER, str);
+        printf("%d %s\n", ev.num, ev.str);
 
         (*env)->ReleaseStringUTFChars(env, line, str);
     }
