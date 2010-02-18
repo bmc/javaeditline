@@ -1,4 +1,0 @@
-bind -e
-bind '^R' em-inc-search-prev
-bind '^I' ed-complete
-edit on

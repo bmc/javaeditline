@@ -1,5 +1,12 @@
 package org.clapper.editline;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class EditLine
 {
     /*----------------------------------------------------------------------*\
@@ -9,6 +16,7 @@ public class EditLine
     private static final String INITIAL_PROMPT = "? ";
     private boolean initialized = false;
     private CompletionHandler completionHandler = null;
+    private boolean historyUnique = false;
 
     /*----------------------------------------------------------------------*\
                            Static Initialization
@@ -144,8 +152,50 @@ public class EditLine
 
     public int historySize()
     {
-        System.out.println("in historySize()");
         return n_history_get_size();
+    }
+
+    public void loadHistory(File f)
+        throws FileNotFoundException,
+               IOException
+    {
+        if (! f.exists())
+            throw new FileNotFoundException(f.getPath());
+
+        BufferedReader r = new BufferedReader(new FileReader(f));
+        for (String line = r.readLine(); line != null; line = r.readLine())
+            addToHistory(line);
+
+        r.close();
+    }
+
+    public void saveHistory(File f)
+        throws IOException
+    {
+        String[] history = getHistory();
+        if ((history != null) && (history.length > 0))
+        {
+            FileWriter w = new FileWriter(f);
+            for (String line : history)
+                w.write(line + "\n");
+            w.close();
+        }
+    }
+
+    public void enableSignalHandling(boolean on)
+    {
+        n_el_trap_signals(on);
+    }
+
+    public boolean getHistoryUnique()
+    {
+        return historyUnique;
+    }
+
+    public void setHistoryUnique(boolean unique)
+    {
+        n_history_set_unique(unique);
+        historyUnique = unique;
     }
 
     /*----------------------------------------------------------------------*\
@@ -154,13 +204,19 @@ public class EditLine
 
     public String handleCompletion(String token, String line, int cursor)
     {
-        return "foo";
+        String result = "";
+
+        if (completionHandler != null)
+            result = completionHandler.complete(token, line, cursor);
+
+        return result;
     }
 
     /*----------------------------------------------------------------------*\
                               Native Methods
     \*----------------------------------------------------------------------*/
 
+    private native static void n_el_trap_signals(boolean onOff);
     private native static void n_el_init(String program, EditLine editLine);
     private native static void n_el_source(String path);
     private native static void n_el_end();
@@ -171,5 +227,6 @@ public class EditLine
     private native static void n_history_clear();
     private native static void n_history_append(String line);
     private native static String[] n_history_get_all();
+    private native static void n_history_set_unique(boolean on);
 }
 
