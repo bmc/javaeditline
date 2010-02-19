@@ -44,7 +44,9 @@
 
 #define min(a, b)  ((a) < (b) ? (a) : (b))
 
-#define PROMPT_MAX 128
+#define PROMPT_MAX      128
+#define MAX_COMPLETIONS 30
+
 #define elPointer2jlong(handle) ((jlong) ((long) handle)) 
 #define jlong2elPointer(jl) ((EditLine *) ((long) jl))
 
@@ -85,6 +87,59 @@ static const char *get_prompt(EditLine *el)
     return data->prompt;
 }
 
+static unsigned char 
+use_first_completion(JNIEnv *env,
+                     EditLine *el,
+                     jobjectArray completions,
+                     int tokenLength)
+{
+    unsigned char result = CC_ERROR;
+
+    jstring js = (jstring) (*env)->GetObjectArrayElement(env, completions, 0);
+    const char *cs = (*env)->GetStringUTFChars(env, js, NULL);
+    if (cs == NULL)
+        puts("Out of memory (Java) during completion.");
+
+    else
+    {
+        result = CC_REFRESH;
+        el_deletestr(el, tokenLength);
+        el_insertstr(el, cs);
+        (*env)->ReleaseStringUTFChars(env, js, cs);
+    }
+
+    return result;
+}
+
+static unsigned char
+show_completions(JNIEnv *env, EditLine *el, jobjectArray completions, int len)
+{
+    int to_show = min(len, MAX_COMPLETIONS);
+    int i;
+
+    puts("\nPossible completions:");
+    for (i = 0; i < to_show; i++)
+    {
+        jstring js = (jstring) (*env)->GetObjectArrayElement(env,
+                                                             completions,
+                                                             i);
+        const char *cs = (*env)->GetStringUTFChars(env, js, NULL);
+        if (cs == NULL)
+        {
+            puts("Out of memory (Java) during completion.");
+            break;
+        }
+
+        puts(cs);
+        (*env)->ReleaseStringUTFChars(env, js, cs);
+    }
+
+    if (to_show < len)
+        puts("...");
+
+    return CC_REDISPLAY;
+}
+
 static unsigned char complete(EditLine *el, int ch)
 {
     jEditLineData *data = get_data(el);
@@ -99,21 +154,27 @@ static unsigned char complete(EditLine *el, int ch)
     
     if (lineInfo != NULL)
     {
-        jLine = (*env)->NewStringUTF(env, lineInfo->buffer);
+        int line_len = (int) (lineInfo->lastchar - lineInfo->buffer);
+        char *line = (char *) malloc(sizeof(char) * (line_len + 1));
+        (void) strncpy(line, lineInfo->buffer, line_len);
+        line[line_len] = '\0';
+
+        jLine = (*env)->NewStringUTF(env, line);
+        free(line);
 
         /* Find the beginning of the current token */
 
         const char *ptr;
-	for (ptr = lineInfo->cursor - 1;
-             (!isspace((unsigned char)*ptr)) && (ptr > lineInfo->buffer); ptr--)
-		continue;
-        if (ptr != lineInfo->buffer)
+	for (ptr = lineInfo->cursor - 1; ptr > lineInfo->buffer; ptr--)
         {
-            /* Stopped on white space. Increment to get to start of token. */
-            ptr++;
+            if (isspace((unsigned char) *ptr))
+            {
+                ptr++;
+                break;
+            }
         }
 
-	tokenLength = lineInfo->cursor - ptr + 1;
+	tokenLength = lineInfo->cursor - ptr;
 
         /* Save it as a Java string. */
 
@@ -124,6 +185,7 @@ static unsigned char complete(EditLine *el, int ch)
         {
             char *token = (char *) malloc(tokenLength + 1);
             strncpy(token, ptr, tokenLength);
+            token[tokenLength] = '\0';
             jToken = (*env)->NewStringUTF(env, token);
             free(token);
         }
@@ -141,27 +203,44 @@ static unsigned char complete(EditLine *el, int ch)
     jmethodID method = data->handleCompletionMethodID;
 
     unsigned char result = CC_ERROR;
-    jstring completion = (*env)->CallObjectMethod(env,
-                                                  data->javaEditLine,
-                                                  method,
-                                                  jToken,
-                                                  jLine,
-                                                  jCursor);
+    jobjectArray completions = (*env)->CallObjectMethod(env,
+                                                        data->javaEditLine,
+                                                        method,
+                                                        jToken,
+                                                        jLine,
+                                                        jCursor);
 
-    if (completion != NULL)
+    if (completions != NULL)
     {
-        const char *str = (*env)->GetStringUTFChars(env, completion, NULL);
-        if (str == NULL)
+        /* You can't always trust the result of GetArrayLength(). */
+
+        jint jlen = (*env)->GetArrayLength(env, completions);
+
+        jstring js;
+        int len = 0;
+        for (len = 0; len < (int) jlen; len++)
         {
-            puts("Out of memory (Java) during completion.");
+            js = (jstring) (*env)->GetObjectArrayElement(env,
+                                                         completions,
+                                                         len);
+            if (js == NULL)
+                break;
         }
 
-        else
+        switch ((int) len)
         {
-            result = CC_REFRESH;
-            el_deletestr(el, tokenLength - 1);
-            el_insertstr(el, str);
-            (*env)->ReleaseStringUTFChars(env, completion, str);
+            case 0:
+                break;
+
+            case 1:
+                result = use_first_completion(env, el, completions,
+                                              tokenLength);
+                break;
+
+            default:
+                result = show_completions(env, el, completions, len);
+                fputs(lineInfo->buffer, stdout);
+                break;
         }
     }
 
@@ -202,7 +281,7 @@ JNIEXPORT jlong JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
         data->handleCompletionMethodID = (*env)->GetMethodID(
             env, cls,
             "handleCompletion",
-            "(Ljava/lang/String;Ljava/lang/String;I)Ljava/lang/String;");
+            "(Ljava/lang/String;Ljava/lang/String;I)[Ljava/lang/String;");
 
         if (data->handleCompletionMethodID != NULL)
             el_set(el, EL_ADDFN, "ed-complete", "Complete", complete);

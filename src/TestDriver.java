@@ -36,6 +36,7 @@ import org.clapper.editline.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class TestDriver implements EditLine.CompletionHandler
 {
@@ -43,32 +44,40 @@ public class TestDriver implements EditLine.CompletionHandler
     {
     }
 
-    private String[] completions = new String[]
+    private String[] POSSIBLE_COMPLETIONS = new String[]
     {
-        "axel",
+        "alice",
         "betty",
+        "bob",
         "linux",
         "freebsd",
         "winders"
     };
 
-    public String complete(String token, String line, int cursor)
-    {
-        String completion = null;
+    private String[] TO_ARRAY_PROTOTYPE = new String[0];
 
-        if (cursor > 0)
+    public String[] complete(String token, String line, int cursor)
+    {
+        String[] result = null;
+
+        if (token.length() == 0)
+            result = POSSIBLE_COMPLETIONS;
+
+        else
         {
-            for (String s : completions)
+            ArrayList<String> completions = new ArrayList<String>();
+
+            for (String s : POSSIBLE_COMPLETIONS)
             {
                 if (s.startsWith(token))
-                {
-                    completion = s;
-                    break;
-                }
+                    completions.add(s);
             }
+
+            if (completions.size() > 0)
+                result = completions.toArray(TO_ARRAY_PROTOTYPE);
         }
 
-        return completion;
+        return result;
     }
 
     void run() throws IOException

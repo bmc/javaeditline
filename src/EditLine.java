@@ -145,9 +145,13 @@ public class EditLine
          * @param cursor index where cursor is, within the line (not within
          *               the token)
          *
-         * @return the completion string, or null for none
+         * @return the completion strings, or null for none. An array with
+         *         one element indicates that there is a single completion
+         *         for the token. An empty or null array means no completions.
+         *         An array with multiple elements means there are multiple
+         *         possible completions.
          */
-        public String complete(String token, String line, int cursor);
+        public String[] complete(String token, String line, int cursor);
     }
 
     /*----------------------------------------------------------------------*\
@@ -489,9 +493,9 @@ public class EditLine
                               Private Methods
     \*----------------------------------------------------------------------*/
 
-    private String handleCompletion(String token, String line, int cursor)
+    private String[] handleCompletion(String token, String line, int cursor)
     {
-        String result = "";
+        String[] result = null;
 
         if (completionHandler != null)
             result = completionHandler.complete(token, line, cursor);
