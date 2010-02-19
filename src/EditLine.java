@@ -58,9 +58,10 @@ import java.io.IOException;
  * EditLine el = EditLine.init("myprogram")
  * try
  * {
- *     el.setPrompt("myprogram> ");
+ *     el.setPrompt("myprogram? ");
+ *     el.setHistorySize(1024);
  *     String line;
- *     while ((line = el.getString()) != null)
+ *     while ((line = el.getLine()) != null)
  *     {
  *         // ...
  *     }
@@ -114,6 +115,7 @@ public class EditLine
     private CompletionHandler completionHandler = null;
     private boolean historyUnique = false;
     private long handle = 0;
+    private String currentPrompt = null;
 
     /*----------------------------------------------------------------------*\
                            Static Initialization
@@ -197,6 +199,14 @@ public class EditLine
         return el;
     }
 
+    /**
+     * Initialize a new <tt>EditLine</tt> instance, without reading a
+     * initialization file.
+     *
+     * @param program   the calling program's name
+     *
+     * @return a new <tt>EditLine</tt> instance.
+     */
     public static EditLine init(String program)
     {
         return init(program, null);
@@ -206,6 +216,10 @@ public class EditLine
                               Public Methods
     \*----------------------------------------------------------------------*/
 
+    /**
+     * Clean up the <tt>EditLine</tt> environment. Once this method is called,
+     * the <tt>EditLine</tt> instance is no longer usable.
+     */
     public synchronized void cleanup()
     {
         if (initialized)
@@ -222,27 +236,73 @@ public class EditLine
         }
     }
 
+    /**
+     * Get the current completion handler. The completion handler is the
+     * object whose <tt>complete()</tt> method is called when the user
+     * presses the completion key (usually the TAB key). There is no default
+     * completion handler.
+     *
+     * @return the completion handler, or null if there is no completion handler
+     */
     public CompletionHandler getCompletionHandler()
     {
         return completionHandler;
     }
 
+    /**
+     * Set (replace) the completion handler. The completion handler is the
+     * object whose <tt>complete()</tt> method is called when the user
+     * presses the completion key (usually the TAB key). There is no default
+     * completion handler.
+     *
+     * @param handler the completion handler, or null to clear the handler
+     */
     public void setCompletionHandler(CompletionHandler handler)
     {
         this.completionHandler = handler;
     }
 
+    /**
+     * Clear's the completion handler. This method is just a convenience for:
+     *
+     * <blockquote><pre>setCompletionHandler(null);</pre></blockquote>
+     */
     public void clearCompletionHandler()
     {
         setCompletionHandler(null);
     }
 
-    public void setPrompt(String _prompt)
+    /**
+     * Set the prompt that is displayed to the user. The default prompt is
+     * "? ".
+     *
+     * @param prompt  the new prompt. Must not be null.
+     */
+    public void setPrompt(String prompt)
     {
-        n_el_set_prompt(handle, _prompt);
+        assert(prompt != null);
+        n_el_set_prompt(handle, prompt);
+        this.currentPrompt = prompt;
     }
 
-    public String getString()
+    /**
+     * Get the current prompt.
+     *
+     * @return the prompt. Never null.
+     */
+    public String getPrompt()
+    {
+        return currentPrompt;
+    }
+
+    /**
+     * Prompt the user for a line of input. This method displays the prompt
+     * and reads a line of input from the user, allowing the user to edit
+     * that line in place, traverse the history, etc.
+     *
+     * @return the input line, or null on end-of-file.
+     */
+    public String getLine()
     {
         String s = n_el_gets(handle);
         if (s != null)
@@ -255,49 +315,122 @@ public class EditLine
         return s;
     }
 
+    /**
+     * Invoke an <tt>editline</tt> command. This method is functionally
+     * equivalent to the underlying <tt>editline</tt> library's
+     * <tt>el_parse()</tt> function. Consult the documentation for the
+     * C <tt>editline</tt> library for a description of what you can pass
+     * to this function.
+     *
+     * @param args  one or more arguments to pass to the underlying
+     *              <tt>editline</tt> <tt>el_parse()</tt> function.
+     */
     public void invokeCommand(String... args)
     {
         n_el_parse(handle, args, args.length);
     }
 
+    /**
+     * <p>Set the size of the history. The history defaults to size 0,
+     * which means no history is maintained. Setting the history size to a
+     * positive <i>n</i> instructs <tt>EditLine</tt> to maintain a history
+     * of, at most, <i>n</i> lines. While entering a line of input, the
+     * user can traverse the history (provided the appropriate keys are
+     * bound) and select from previously entered input lines.</p>
+     *
+     * <p>NOTE: Lines of input are <i>not</i> automatically added to the 
+     * history. You must call the <tt>addToHistory()</tt> method to put a
+     * line into the history. This policy affords the calling program the
+     * most control over the history buffer.</p>
+     *
+     * @param size  the new history size. Must not be negative. A value of
+     *              0 disables the history.
+     */
     public void setHistorySize(int size)
     {
+        assert(size >= 0);
         n_history_set_size(handle, size);
     }
 
+    /**
+     * Get the size of the history. The history defaults to size 0, which means
+     * no history is maintained. Setting the history size to a positive <i>n</i>
+     * instructs <tt>EditLine</tt> to maintain a history of, at most, <i>n</i>
+     * lines. While entering a line of input, the user can traverse the
+     * history (provided the appropriate keys are bound) and select from 
+     * previously entered input lines.
+     *
+     * @return  the current history size. A value of 0 means that the history
+     *          is currently disabled.
+     */
     public int getHistorySize()
     {
         return n_history_get_size(handle);
     }
 
+    /**
+     * Clear the contents of the history buffer.
+     */
     public void clearHistory()
     {
         n_history_clear(handle);
     }
 
+    /**
+     * <p>Add a line to the history buffer. If the history buffer is already
+     * full, the oldest line is discarded before the new line is added.
+     * Lines of input are <i>not</i> automatically added to the history.
+     * You must call the <tt>addToHistory()</tt> method to put a line into
+     * the history. This policy affords the calling program the most
+     * control over the history buffer.</p>
+     *
+     * <p>If history uniqueness is enabled (see <tt>setHistoryUnique()</tt>)
+     * and the input line matches the most recent line in the history, the
+     * input line will not be added to the history. Similarly, this method
+     * will not add an empty or completely blank line to the history.</p>
+     *
+     * @param line  the line to add to the history.
+     */
     public void addToHistory(String line)
     {
         if ((line != null) && (line.trim().length() > 0))
             n_history_append(handle, line);
     }
 
+    /**
+     * Get the contents of the history buffer.
+     *
+     * @return the lines in the history buffer. An empty array is returned if
+     *         the history buffer is empty or not enabled.
+     */
     public String[] getHistory()
     {
         return n_history_get_all(handle);
     }
 
-    public int historySize()
+    /**
+     * Get the number of lines in the current history buffer.
+     *
+     * @return the number of lines in the history buffer
+     */
+    public int historyTotal()
     {
         return n_history_get_size(handle);
     }
 
+    /**
+     * Load the contents of a text file, adding its lines to the history
+     * buffer.
+     *
+     * @param f  the file to read
+     *
+     * @throws FileNotFoundException  if the file doesn't exist.
+     * @throws IOException            if the file cannot be read.
+     */
     public void loadHistory(File f)
         throws FileNotFoundException,
                IOException
     {
-        if (! f.exists())
-            throw new FileNotFoundException(f.getPath());
-
         BufferedReader r = new BufferedReader(new FileReader(f));
         for (String line = r.readLine(); line != null; line = r.readLine())
             addToHistory(line);
@@ -305,6 +438,13 @@ public class EditLine
         r.close();
     }
 
+    /**
+     * Save the history buffer to a file. The file is overwritten, not appended.
+     *
+     * @param f  the file to write
+     *
+     * @throws IOException if the file cannot be written.
+     */
     public void saveHistory(File f)
         throws IOException
     {
@@ -318,11 +458,27 @@ public class EditLine
         }
     }
 
+    /**
+     * Get the history uniqueness setting. If history uniqueness is enabled
+     * and an input line passed to <tt>addToHistory()</tt> matches the most
+     * recent line in the history, the input line will not be added to the
+     * history. History uniqueness is disabled by default.
+     *
+     * @return whether or not history uniqueness is enabled
+     */
     public boolean getHistoryUnique()
     {
         return historyUnique;
     }
 
+    /**
+     * Change the history uniqueness setting. If history uniqueness is enabled
+     * and an input line passed to <tt>addToHistory()</tt> matches the most
+     * recent line in the history, the input line will not be added to the
+     * history. History uniqueness is disabled by default.
+     *
+     * @param unique  whether or not to enable history uniqueness.
+     */
     public void setHistoryUnique(boolean unique)
     {
         n_history_set_unique(handle, unique);
@@ -333,7 +489,7 @@ public class EditLine
                               Private Methods
     \*----------------------------------------------------------------------*/
 
-    public String handleCompletion(String token, String line, int cursor)
+    private String handleCompletion(String token, String line, int cursor)
     {
         String result = "";
 

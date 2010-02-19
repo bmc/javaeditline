@@ -85,9 +85,9 @@ public class TestDriver implements EditLine.CompletionHandler
         e.invokeCommand("bind", "^I", "ed-complete");
 
         //e.enableSignalHandling(true);
-        e.setPrompt("[" + e.historySize() + "] Well? ");
+        e.setPrompt("[" + e.historyTotal() + "] Well? ");
         String line;
-        while ((line = e.getString()) != null)
+        while ((line = e.getLine()) != null)
         {
             System.out.println("Got: \"" + line + "\"");
             e.addToHistory(line);
@@ -97,7 +97,7 @@ public class TestDriver implements EditLine.CompletionHandler
                     System.out.println(s);
             }
 
-            e.setPrompt("[" + e.historySize() + "] Well? ");
+            e.setPrompt("[" + e.historyTotal() + "] Well? ");
         }
 
         e.saveHistory(historyFile);

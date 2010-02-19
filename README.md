@@ -29,10 +29,11 @@ usage pattern:
             EditLine el = EditLine.init("myprogram")
             try
             {
-                el.setPrompt("myprogram> ");
+                el.setPrompt("myprogram? ");
+                el.setHistorySize(1024);
 
                 String line;
-                while ((line = el.getString()) != null)
+                while ((line = el.getLine()) != null)
                 {
                     // ...
                 }
