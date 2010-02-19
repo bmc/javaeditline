@@ -42,8 +42,23 @@ public class EditLine
                                Inner Classes
     \*----------------------------------------------------------------------*/
 
+    /**
+     * Any class wishing to act as a completion handler for EditLine must
+     * implement this interface.
+     */
     public interface CompletionHandler
     {
+        /**
+         * Called by EditLine in response to a token completion request
+         * (typically bound to TAB).
+         *
+         * @param token  the token being completed. Can be "".
+         * @param line   the current line being completed
+         * @param cursor index where cursor is, within the line (not within
+         *               the token)
+         *
+         * @return the completion string, or null for none
+         */
         public String complete(String token, String line, int cursor);
     }
 
@@ -134,6 +149,11 @@ public class EditLine
         }
 
         return s;
+    }
+
+    public void invokeCommand(String... args)
+    {
+        n_el_parse(handle, args, args.length);
     }
 
     public void setHistorySize(int size)
@@ -234,5 +254,6 @@ public class EditLine
     private native static void n_history_append(long handle, String line);
     private native static String[] n_history_get_all(long handle);
     private native static void n_history_set_unique(long handle, boolean on);
+    private native static void n_el_parse(long handle, String[] args, int len);
 }
 

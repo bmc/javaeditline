@@ -267,6 +267,36 @@ JNIEXPORT jstring JNICALL Java_org_clapper_editline_EditLine_n_1el_1gets
 
 /*
  * Class:  org_clapper_editline_EditLine
+ * Method: static void n_el_bind(long handle, String[] args)
+ */
+JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1parse
+    (JNIEnv *env, jclass cls, jlong handle, jobjectArray args, jint len)
+{
+    EditLine *el = jlong2elPointer(handle);
+    const char **buf = (const char **) malloc(len * sizeof(const char *));
+    const char **ptr = buf;
+    int i;
+    jstring js;
+    for (i = 0; i < (int) len; i++)
+    {
+        js = (jstring) (*env)->GetObjectArrayElement(env, args, i);
+        const char *cs = (*env)->GetStringUTFChars(env, js, NULL);
+        *ptr++ = cs;
+    }
+
+    el_parse(el, (int) len, buf);
+
+    ptr = buf;
+    for (i = 0; i < (int) len; i++)
+    {
+        js = (jstring) (*env)->GetObjectArrayElement(env, args, i);
+        (*env)->ReleaseStringUTFChars(env, js, *ptr);
+        ptr++;
+    }
+}
+
+/*
+ * Class:  org_clapper_editline_EditLine
  * Method: static int n_history_get_size(long handle)
  */
 JNIEXPORT jint JNICALL Java_org_clapper_editline_EditLine_n_1history_1get_1size

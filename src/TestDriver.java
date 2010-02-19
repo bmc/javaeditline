@@ -23,12 +23,15 @@ public class TestDriver implements EditLine.CompletionHandler
     {
         String completion = null;
 
-        for (String s : completions)
+        if (cursor > 0)
         {
-            if (s.startsWith(token))
+            for (String s : completions)
             {
-                completion = s;
-                break;
+                if (s.startsWith(token))
+                {
+                    completion = s;
+                    break;
+                }
             }
         }
 
@@ -45,6 +48,8 @@ public class TestDriver implements EditLine.CompletionHandler
         File historyFile = new File("test.history");
         if (historyFile.exists())
             e.loadHistory(historyFile);
+
+        e.invokeCommand("bind", "^I", "ed-complete");
 
         //e.enableSignalHandling(true);
         e.setPrompt("[" + e.historySize() + "] Well? ");
