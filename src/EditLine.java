@@ -200,6 +200,9 @@ public class EditLine
         el.handle = n_el_init(program, el);
         n_el_source(el.handle, initFile);
         el.setPrompt(INITIAL_PROMPT);
+
+        // Bind TAB to complete.
+        e.invokeCommand("bind", "^I", "ed-complete");
         return el;
     }
 
