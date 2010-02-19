@@ -106,10 +106,15 @@ import java.io.IOException;
 public class EditLine
 {
     /*----------------------------------------------------------------------*\
-                            Instance Variables
+                            Constants
     \*----------------------------------------------------------------------*/
 
     private static final String INITIAL_PROMPT = "? ";
+    public static final String VERSION = "0.2";
+
+    /*----------------------------------------------------------------------*\
+                            Instance Variables
+    \*----------------------------------------------------------------------*/
 
     private boolean initialized = false;
     private CompletionHandler completionHandler = null;
@@ -202,7 +207,7 @@ public class EditLine
         el.setPrompt(INITIAL_PROMPT);
 
         // Bind TAB to complete.
-        e.invokeCommand("bind", "^I", "ed-complete");
+        el.invokeCommand("bind", "^I", "ed-complete");
         return el;
     }
 
