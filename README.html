@@ -10,6 +10,40 @@ Readline</a> library, with a more liberal BSD-style license. Linking
 Editline into your code (and, similarly, using this Java interface to it)
 will not change the license you have assigned to your code.</p>
 
+<h2>Using the Library</h2>
+
+<p>An <code>EditLine</code> object is instantiated via a factory method. The finalizer
+for the returned object restores the terminal environment, if you don't do
+it yourself--but you're better off doing it yourself. Here's the typical
+usage pattern:</p>
+
+<pre><code>import org.clapper.editline.EditLine
+
+public class MyProgram
+{
+    public static void main(String[] args)
+    {
+        EditLine el = EditLine.init("myprogram")
+        try
+        {
+            el.setPrompt("myprogram&gt; ");
+
+            String line;
+            while ((line = el.getString()) != null)
+            {
+                // ...
+            }
+
+            System.exit(0);
+        }
+        finally
+        {
+            el.cleanup();
+        }
+    }
+}
+</code></pre>
+
 <h2>Restrictions</h2>
 
 <p>This package is only known to work on Unix-like operating systems. I have

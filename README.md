@@ -13,6 +13,40 @@ will not change the license you have assigned to your code.
 [readline]: http://tiswww.case.edu/php/chet/readline/rltop.html
 [editline]: http://www.thrysoee.dk/editline/
 
+## Using the Library
+
+An `EditLine` object is instantiated via a factory method. The finalizer
+for the returned object restores the terminal environment, if you don't do
+it yourself--but you're better off doing it yourself. Here's the typical
+usage pattern:
+
+    import org.clapper.editline.EditLine
+
+    public class MyProgram
+    {
+        public static void main(String[] args)
+        {
+            EditLine el = EditLine.init("myprogram")
+            try
+            {
+                el.setPrompt("myprogram> ");
+
+                String line;
+                while ((line = el.getString()) != null)
+                {
+                    // ...
+                }
+
+                System.exit(0);
+            }
+            finally
+            {
+                el.cleanup();
+            }
+        }
+    }
+        
+            
 ## Restrictions
 
 This package is only known to work on Unix-like operating systems. I have
