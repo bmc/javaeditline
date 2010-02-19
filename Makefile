@@ -2,6 +2,14 @@
 # Master Makefile
 # ---------------------------------------------------------------------------
 
+.SUFFIXES: .md .html
+
+%.html: %.md
+	(echo "<html><head><title>Java EditLine $*</title></head><body>" ;\
+	 markdown < $< ;\
+	 echo "</body></html>" ) > $@
+	
+
 all: source docs
 
 source:
@@ -13,17 +21,11 @@ docs: html apidocs
 apidocs:
 	$(MAKE) -C src docs
 
-html: README.html LICENSE.html
+html: README.html LICENSE.html FAQ.html
 
 README.html: README.md
-	(echo "<html><head><title>Java EditLine README</title></head><body>" ;\
-	 markdown <README.md ;\
-	 echo "</body></html>" ) >README.html
-
 LICENSE.html: LICENSE.md
-	(echo "<html><head><title>Java EditLine License</title></head><body>" ;\
-	 markdown <LICENSE.md ;\
-	 echo "</body></html>" ) >LICENSE.html
+FAQ.html: FAQ.md
 
 clean:
 	$(MAKE) -C src clean
