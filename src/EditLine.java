@@ -7,6 +7,15 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * This class provides a Java interface to the BSD <tt>editline</tt>
+ * library, which is available on BSD systems and Mac OS X, and can be
+ * installed on most Linux systems. <tt>editline</tt> is a replacement for
+ * the GNU Readline library, with a more liberal BSD-style license. Linking
+ * <tt>editline</tt> into your code (and, similarly, using this Java
+ * interface to it) will not change the license you have assigned to your
+ * code.
+ */
 public class EditLine
 {
     /*----------------------------------------------------------------------*\
@@ -14,9 +23,11 @@ public class EditLine
     \*----------------------------------------------------------------------*/
 
     private static final String INITIAL_PROMPT = "? ";
+
     private boolean initialized = false;
     private CompletionHandler completionHandler = null;
     private boolean historyUnique = false;
+    private long handle = 0;
 
     /*----------------------------------------------------------------------*\
                            Static Initialization
@@ -60,11 +71,11 @@ public class EditLine
 
     public static EditLine init(String program, String initFile)
     {
-        EditLine editLine = new EditLine();
-        n_el_init(program, editLine);
-        n_el_source(initFile);
-        editLine.setPrompt(INITIAL_PROMPT);
-        return editLine;
+        EditLine el = new EditLine();
+        el.handle = n_el_init(program, el);
+        n_el_source(el.handle, initFile);
+        el.setPrompt(INITIAL_PROMPT);
+        return el;
     }
 
     public static EditLine init(String program)
@@ -82,7 +93,7 @@ public class EditLine
         {
             try
             {
-                n_el_end();
+                n_el_end(handle);
             }
 
             finally
@@ -109,12 +120,12 @@ public class EditLine
 
     public void setPrompt(String _prompt)
     {
-        n_el_set_prompt(_prompt);
+        n_el_set_prompt(handle, _prompt);
     }
 
     public String getString()
     {
-        String s = n_el_gets();
+        String s = n_el_gets(handle);
         if (s != null)
         {
             int len = s.length();
@@ -127,32 +138,33 @@ public class EditLine
 
     public void setHistorySize(int size)
     {
-        n_history_set_size(size);
+        n_history_set_size(handle, size);
     }
 
     public int getHistorySize()
     {
-        return n_history_get_size();
+        return n_history_get_size(handle);
     }
 
     public void clearHistory()
     {
-        n_history_clear();
+        n_history_clear(handle);
     }
 
     public void addToHistory(String line)
     {
-        n_history_append(line);
+        if ((line != null) && (line.trim().length() > 0))
+            n_history_append(handle, line);
     }
 
     public String[] getHistory()
     {
-        return n_history_get_all();
+        return n_history_get_all(handle);
     }
 
     public int historySize()
     {
-        return n_history_get_size();
+        return n_history_get_size(handle);
     }
 
     public void loadHistory(File f)
@@ -182,11 +194,6 @@ public class EditLine
         }
     }
 
-    public void enableSignalHandling(boolean on)
-    {
-        n_el_trap_signals(on);
-    }
-
     public boolean getHistoryUnique()
     {
         return historyUnique;
@@ -194,7 +201,7 @@ public class EditLine
 
     public void setHistoryUnique(boolean unique)
     {
-        n_history_set_unique(unique);
+        n_history_set_unique(handle, unique);
         historyUnique = unique;
     }
 
@@ -216,17 +223,16 @@ public class EditLine
                               Native Methods
     \*----------------------------------------------------------------------*/
 
-    private native static void n_el_trap_signals(boolean onOff);
-    private native static void n_el_init(String program, EditLine editLine);
-    private native static void n_el_source(String path);
-    private native static void n_el_end();
-    private native static void n_el_set_prompt(String prompt);
-    private native static String n_el_gets();
-    private native static int n_history_get_size();
-    private native static void n_history_set_size(int size);
-    private native static void n_history_clear();
-    private native static void n_history_append(String line);
-    private native static String[] n_history_get_all();
-    private native static void n_history_set_unique(boolean on);
+    private native static long n_el_init(String program, EditLine editLine);
+    private native static void n_el_source(long handle, String path);
+    private native static void n_el_end(long handle);
+    private native static void n_el_set_prompt(long handle, String prompt);
+    private native static String n_el_gets(long handle);
+    private native static int n_history_get_size(long handle);
+    private native static void n_history_set_size(long handle, int size);
+    private native static void n_history_clear(long handle);
+    private native static void n_history_append(long handle, String line);
+    private native static String[] n_history_get_all(long handle);
+    private native static void n_history_set_unique(long handle, boolean on);
 }
 
