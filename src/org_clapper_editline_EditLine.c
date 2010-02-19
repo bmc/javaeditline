@@ -4,12 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <signal.h>
 #include <assert.h>
+
+#include "org_clapper_editline_EditLine.h"
 
 #define min(a, b)  ((a) < (b) ? (a) : (b))
 
 #define PROMPT_MAX 128
+#define elPointer2jlong(handle) ((jlong) ((long) handle)) 
+#define jlong2elPointer(jl) ((EditLine *) ((long) jl))
 
 typedef struct _SimpleStringList
 {
@@ -21,6 +24,7 @@ SimpleStringList;
 typedef struct _jEditLineData
 {
     char prompt[PROMPT_MAX];
+    History *history;
     JNIEnv *env;
     jclass javaClass;
     jobject javaEditLine;
@@ -28,44 +32,28 @@ typedef struct _jEditLineData
 }
 jEditLineData;
 
-static sig_t prev_sigint = SIG_DFL;
-static sig_t prev_sigquit = SIG_DFL;
-static sig_t prev_sighup = SIG_DFL;
-static sig_t prev_sigterm = SIG_DFL;
-
-/* Can only have one per process. */
-
-static EditLine *editLineDesc = NULL;
-static History *historyDesc = NULL;
-
-volatile sig_atomic_t gotsig = 0;
-static void signal_handler(int i)
-{
-    gotsig = 1;
-}
-
-static jEditLineData *get_data()
+static jEditLineData *get_data(EditLine *el)
 {
     void *d;
-    el_get(editLineDesc, EL_CLIENTDATA, &d);
+    el_get(el, EL_CLIENTDATA, &d);
     return (jEditLineData *) d;
 }
 
-static void set_prompt(const char *new_prompt)
+static void set_prompt(EditLine *el, const char *new_prompt)
 {
-    jEditLineData *data = get_data();
+    jEditLineData *data = get_data(el);
     strncpy(data->prompt, new_prompt, PROMPT_MAX - 1);
 }
 
-static const char *get_prompt()
+static const char *get_prompt(EditLine *el)
 {
-    jEditLineData *data = get_data();
+    jEditLineData *data = get_data(el);
     return data->prompt;
 }
 
 static unsigned char complete(EditLine *el, int ch)
 {
-    jEditLineData *data = get_data();
+    jEditLineData *data = get_data(el);
     JNIEnv *env = data->env;
 
     const LineInfo *lineInfo = el_line(el);
@@ -150,7 +138,7 @@ static unsigned char complete(EditLine *el, int ch)
  * Class:  org_clapper_editline_EditLine
  * Method: static long n_el_init(String program, EditLine javaEditLine)
  */
-JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
+JNIEXPORT jlong JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
     (JNIEnv *env, jclass cls, jstring program, jobject javaEditLine)
 {
     const char *cProgram = (*env)->GetStringUTFChars(env, program, NULL);
@@ -161,6 +149,7 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
     }
 
     jEditLineData *data = (jEditLineData*) malloc(sizeof(jEditLineData));
+    jlong handle = 0;
 
     if (data == NULL)
     {
@@ -170,8 +159,8 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
 
     else
     {
-        editLineDesc = el_init(cProgram, stdin, stdout, stderr);
-        historyDesc = history_init();
+        EditLine *el = el_init(cProgram, stdin, stdout, stderr);
+        data->history = history_init();
 
         data->env = env;
         data->javaClass = (*env)->NewGlobalRef(env, cls);
@@ -182,27 +171,29 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
             "(Ljava/lang/String;Ljava/lang/String;I)Ljava/lang/String;");
 
         if (data->handleCompletionMethodID != NULL)
-            el_set(editLineDesc, EL_ADDFN, "ed-complete", "Complete", complete);
+            el_set(el, EL_ADDFN, "ed-complete", "Complete", complete);
 
-        el_set(editLineDesc, EL_CLIENTDATA, (void *) data);
-        el_set(editLineDesc, EL_PROMPT, get_prompt);
-        el_set(editLineDesc, EL_HIST, history, historyDesc);
-        el_set(editLineDesc, EL_SIGNAL, 1);
-
+        el_set(el, EL_CLIENTDATA, (void *) data);
+        el_set(el, EL_PROMPT, get_prompt);
+        el_set(el, EL_HIST, history, data->history);
+        el_set(el, EL_SIGNAL, 1);
+        handle = elPointer2jlong(el);
     }
 
     (*env)->ReleaseStringUTFChars(env, program, cProgram);
+    return handle;
 }
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static void n_el_source(String path);
+ * Method: static void n_el_source(long handle, String path)
  */
 JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1source
-  (JNIEnv *env, jclass cls, jstring javaPath)
+    (JNIEnv *env, jclass cls, jlong handle, jstring javaPath)
 {
+    EditLine *el = jlong2elPointer(handle);
     if (javaPath == NULL)
-        el_source(editLineDesc, NULL);
+        el_source(el, NULL);
 
     else
     {
@@ -214,7 +205,7 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1source
 
         else
         {
-            el_source(editLineDesc, path);
+            el_source(el, path);
             (*env)->ReleaseStringUTFChars(env, javaPath, path);
         }
     }
@@ -223,23 +214,25 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1source
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static void n_el_end();
+ * Method: static void n_el_end(long handle)
  */
 JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1end
-(JNIEnv *env, jclass cls)
+    (JNIEnv *env, jclass cls, jlong handle)
 {
-    el_end(editLineDesc);
-    history_end(historyDesc);
-    editLineDesc = NULL;
-    historyDesc = NULL;
+    EditLine *el = jlong2elPointer(handle);
+    jEditLineData *data = get_data(el);
+    history_end(data->history);
+    el_end(el);
+    el = NULL;
+    free(data);
 }
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static void n_el_set_prompt(, String prompt);
+ * Method: static void n_el_set_prompt(long handle, String prompt)
  */
 JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1set_1prompt
-(JNIEnv *env, jclass cls, jstring prompt)
+    (JNIEnv *env, jclass cls, jlong handle, jstring prompt)
 {
     const char *str = (*env)->GetStringUTFChars(env, prompt, NULL);
     if (str == NULL)
@@ -249,39 +242,23 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1set_1prompt
 
     else
     {
-        set_prompt(str);
+        EditLine *el = jlong2elPointer(handle);
+        set_prompt(el, str);
         (*env)->ReleaseStringUTFChars(env, prompt, str);
     }
 }
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static String n_el_gets();
+ * Method: static String n_el_gets(long handle)
  */
 JNIEXPORT jstring JNICALL Java_org_clapper_editline_EditLine_n_1el_1gets
-  (JNIEnv *env, jclass cls)
+    (JNIEnv *env, jclass cls, jlong handle)
 {
     jstring result = NULL;
-    int count = 0;
-    const char *line;
-
-    for (;;)
-    {
-        line = el_gets(editLineDesc, &count);
-
-        if (gotsig)
-        {
-            gotsig = 0;
-            el_reset(editLineDesc);
-            putchar('\n');
-        }
-
-        else
-        {
-            break;
-        }
-    }
-
+    EditLine *el = jlong2elPointer(handle);
+    int count;
+    const char *line = el_gets(el, &count);
     if (line != NULL)
         result = (*env)->NewStringUTF(env, line);
 
@@ -290,22 +267,24 @@ JNIEXPORT jstring JNICALL Java_org_clapper_editline_EditLine_n_1el_1gets
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static int n_history_get_size()
+ * Method: static int n_history_get_size(long handle)
  */
 JNIEXPORT jint JNICALL Java_org_clapper_editline_EditLine_n_1history_1get_1size
-  (JNIEnv *env, jclass cls)
+    (JNIEnv *env, jclass cls, jlong handle)
 {
+    EditLine *el = jlong2elPointer(handle);
+    jEditLineData *data = get_data(el);
     HistEvent ev;
     /**
        H_GETSIZE doesn't seem to work on the Mac.
 
-    int result = (jint) history(historyDesc, &ev, H_GETSIZE);
+    int result = (jint) history(data->history, &ev, H_GETSIZE);
     */
     int total = 0;
     int rc;
-    for (rc = history(historyDesc, &ev, H_LAST);
+    for (rc = history(data->history, &ev, H_LAST);
          rc != -1;
-         rc = history(historyDesc, &ev, H_PREV))
+         rc = history(data->history, &ev, H_PREV))
         total++;
 
     return total;
@@ -313,32 +292,36 @@ JNIEXPORT jint JNICALL Java_org_clapper_editline_EditLine_n_1history_1get_1size
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static void n_history_set_size(, int size)
+ * Method: static void n_history_set_size(long handle, int size)
  */
 JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1set_1size
-  (JNIEnv *env, jclass cls, jint newSize)
+    (JNIEnv *env, jclass cls, jlong handle, jint newSize)
 {
+    EditLine *el = jlong2elPointer(handle);
+    jEditLineData *data = get_data(el);
     HistEvent ev;
-    history(historyDesc, &ev, H_SETSIZE, (int) newSize);
+    history(data->history, &ev, H_SETSIZE, (int) newSize);
 }
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static void n_history_clear()
+ * Method: static void n_history_clear(long handle)
  */
 JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1clear
-  (JNIEnv *env, jclass cls)
+    (JNIEnv *env, jclass cls, jlong handle)
 {
+    EditLine *el = jlong2elPointer(handle);
     HistEvent ev;
-    history(historyDesc, &ev, H_CLEAR);
+    jEditLineData *data = get_data(el);
+    history(data->history, &ev, H_CLEAR);
 }
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static void n_history_append(, String line)
+ * Method: static void n_history_append(long handle, String line)
  */
 JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1append
-  (JNIEnv *env, jclass cls, jstring line)
+    (JNIEnv *env, jclass cls, jlong handle, jstring line)
 {
     const char *str = (*env)->GetStringUTFChars(env, line, NULL);
     if (str == NULL)
@@ -348,20 +331,22 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1append
 
     else
     {
+    EditLine *el = jlong2elPointer(handle);
         HistEvent ev;
         ev.str = str;
-        history(historyDesc, &ev, H_ENTER, str);
+        jEditLineData *data = get_data(el);
+        history(data->history, &ev, H_ENTER, str);
         (*env)->ReleaseStringUTFChars(env, line, str);
     }
 }
 
 /*
  * Class:  org_clapper_editline_EditLine
- * Method: static String[] n_history_get_all()
+ * Method: static String[] n_history_get_all(long handle)
  */
 JNIEXPORT
 jobjectArray JNICALL Java_org_clapper_editline_EditLine_n_1history_1get_1all
-  (JNIEnv *env, jclass cls)
+    (JNIEnv *env, jclass cls, jlong handle)
 {
     SimpleStringList *list = NULL;
 
@@ -374,9 +359,11 @@ jobjectArray JNICALL Java_org_clapper_editline_EditLine_n_1history_1get_1all
       traverse the list once. For simplicity, insert the entries at the top
       (like a stack).
     */
-    for (rc = history(historyDesc, &ev, H_LAST);
+    EditLine *el = jlong2elPointer(handle);
+    jEditLineData *data = get_data(el);
+    for (rc = history(data->history, &ev, H_LAST);
          rc != -1;
-         rc = history(historyDesc, &ev, H_PREV))
+         rc = history(data->history, &ev, H_PREV))
     {
         SimpleStringList *entry =
             (SimpleStringList *) malloc(sizeof(SimpleStringList));
@@ -436,39 +423,15 @@ jobjectArray JNICALL Java_org_clapper_editline_EditLine_n_1history_1get_1all
 
 /*
  * Class:     org_clapper_editline_EditLine
- * Method:    n_el_trap_signals
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1trap_1signals
-    (JNIEnv *env, jclass cls, jboolean on)
-{
-    gotsig = 0;
-
-    if (on)
-    {
-        prev_sigint = signal(SIGINT, signal_handler);
-        prev_sighup = signal(SIGHUP, signal_handler);
-        prev_sigquit = signal(SIGQUIT, signal_handler);
-        prev_sigterm = signal(SIGTERM, signal_handler);
-    }
-
-    else
-    {
-        (void) signal(SIGINT, prev_sigint);
-        (void) signal(SIGHUP, prev_sighup);
-        (void) signal(SIGQUIT, prev_sigquit);
-        (void) signal(SIGTERM, prev_sigterm);
-    }
-}
-
-/*
- * Class:     org_clapper_editline_EditLine
- * Method:    static void n_history_set_unique(boolean on)
+ * Method:    static void n_history_set_unique(long handle, boolean on)
  * Signature: (Z)V
  */
-JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1set_1unique
-  (JNIEnv *env, jclass cls, jboolean on)
+JNIEXPORT void
+JNICALL Java_org_clapper_editline_EditLine_n_1history_1set_1unique
+    (JNIEnv *env, jclass cls, jlong handle, jboolean on)
 {
+    EditLine *el = jlong2elPointer(handle);
+    jEditLineData *data = get_data(el);
     HistEvent ev;
-    history(historyDesc, &ev, H_SETUNIQUE, on ? 1 : 0);
+    history(data->history, &ev, H_SETUNIQUE, on ? 1 : 0);
 }
