@@ -9,6 +9,7 @@ source:
 
 # Depends on markdown being present.
 docs:	README.html
+	$(MAKE) -C src docs
 
 README.html:	README.md
 	(echo "<html><head><title>Java EditLine README</title></head><body>" ;\
@@ -17,4 +18,3 @@ README.html:	README.md
 
 clean:
 	$(MAKE) -C src clean
-	rm -f README.html

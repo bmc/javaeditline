@@ -8,6 +8,7 @@ PLATFORM     = $(shell uname -s)
 CLASSDIR     = classes
 CLASS_PKGDIR = $(CLASSDIR)/org/clapper/editline
 CLASSES      = $(CLASS_PKGDIR)/EditLine.class
+APIDOCS      = ../apidocs
 
 # ---------------------------------------------------------------------------
 # Platform-specific stuff
@@ -20,6 +21,7 @@ include Makedefs.$(PLATFORM)
 JAVAC    = $(JAVA_HOME)/bin/javac
 JAVAH    = $(JAVA_HOME)/bin/javah
 JAR      = $(JAVA_HOME)/bin/jar
+JAVADOC  = $(JAVA_HOME)/bin/javadoc
 
 # ---------------------------------------------------------------------------
 # Targets
@@ -29,7 +31,13 @@ all: compile package
 
 clean:
 	rm -rf $(CLASSDIR) $(SOLIB) *.o \
-        org_clapper_editline_*.h *.jar *.class
+        org_clapper_editline_*.h *.jar *.class $(APIDOCS)
+
+docs:
+	$(JAVADOC) -d $(APIDOCS) \
+        -header '<b>Java EditLine</b>' \
+	-footer 'Copyright &copy; 2010 Brian M. Clapper' \
+        EditLine.java
 
 compile: java native
 

@@ -3,14 +3,15 @@ EditLine Interface for Java
 
 ## Introduction
 
-This library provides a Java (JNI) interface to the BSD `editline` library,
-which is available on BSD systems and Mac OS X, and can be installed on
-most Linux systems. `editline` is a replacement for the [GNU Readline][readline]
-library, with a more liberal BSD-style license. Linking `editline` into your
-code (and, similarly, using this Java interface to it) will not change the
-license you have assigned to your code.
+This library provides a Java (JNI) interface to the [Editline][editline]
+library, which is available on BSD systems and Mac OS X, and can be
+installed on most Linux systems. Editline is a replacement for the [GNU
+Readline][readline] library, with a more liberal BSD-style license. Linking
+Editline into your code (and, similarly, using this Java interface to it)
+will not change the license you have assigned to your code.
 
 [readline]: http://tiswww.case.edu/php/chet/readline/rltop.html
+[editline]: http://www.thrysoee.dk/editline/
 
 ## Restrictions
 
@@ -21,9 +22,36 @@ tested it on:
 - FreeBSD 8
 - Mac OS X (10.4)
 
+This Java wrapper does not expose all the functionality of the underlying
+Editline library.
+
+* This wrapper does not support the use of alternate file descriptors. All
+  Editline instances use standard input, output and error. While this
+  library theoretically permits multiple Editline instances to be
+  constructed, all such instances use the same file descriptors (which
+  limits the utility of having multiple instances). In practice, this is
+  generally not a problem.
+
+* This class does not currently expose the Editline library's tokenizer
+  functionality (e.g., the `tok_init()`, `tok_line()`, `tok_str()`,
+  `tok_reset()` and `tok_end()` functions).
+
+* Signal handling is currently omitted, as it doesn't play well with the JVM.
+
+* Certain Editline functions are not currently exposed, among them:
+
+  - `el_insertstr()`
+  - `el_deletestr()`
+  - `el_set()`
+  - `el_get()`
+  - `el_getc()`
+  - `el_reset()`
+  - `el_push()`
+
 ## Building
 
-After unpacking the source, change your working directory to `src`. The code uses GNU `make` to build. The `make` logic is split into two pieces:
+After unpacking the source, change your working directory to `src`. The
+code uses GNU `make` to build. The `make` logic is split into two pieces:
 
 * A platform-independent `Makefile`.
 * Architecture-specific build definitions. These definitions are in the
@@ -35,11 +63,11 @@ How to build:
 * Type `uname -s` at the command line. If there's an existing `Makedefs` file
   for your platform, you're probably fine. (You may have to edit it, if there
   are errors.)
-* Install the `editline` library, if necessary. This is *not* necessary on
+* Install the Editline library, if necessary. This is *not* necessary on
   FreeBSD or Mac OS X. For Linux distributions, you can usually find an
-  appropriate version of `editline` in your distro's repository. For example,
+  appropriate version of Editline in your distro's repository. For example,
   for Ubuntu: `apt-get install libedit-dev`.
-* Type `make`. If it's successfully, you'll get a shared library and a jar
+* Type `make`. If it's successful, you'll get a shared library and a jar
   file.
 
 ## License and Copyright
@@ -62,9 +90,9 @@ modification, are permitted provided that the following conditions are met:
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-* Neither the names "clapper.org", "Grizzled Scala Library", nor the names
-  of its contributors may be used to endorse or promote products derived
-  from this software without specific prior written permission.
+* Neither the names "clapper.org", "Java EditLine", nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE

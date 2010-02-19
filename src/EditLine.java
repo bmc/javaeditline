@@ -1,3 +1,37 @@
+/*---------------------------------------------------------------------------*\
+  This software is released under a BSD license, adapted from
+  http://opensource.org/licenses/bsd-license.php.
+
+  Copyright (c) 2010 Brian M. Clapper
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+  
+  * Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+  * Neither the names "clapper.org", "Java EditLine", nor the names of its
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+\*---------------------------------------------------------------------------*/
+  
 package org.clapper.editline;
 
 import java.io.BufferedReader;
@@ -8,13 +42,65 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 /**
- * This class provides a Java interface to the BSD <tt>editline</tt>
- * library, which is available on BSD systems and Mac OS X, and can be
- * installed on most Linux systems. <tt>editline</tt> is a replacement for
- * the GNU Readline library, with a more liberal BSD-style license. Linking
- * <tt>editline</tt> into your code (and, similarly, using this Java
- * interface to it) will not change the license you have assigned to your
- * code.
+ * <p>This class provides a Java interface to the BSD Editline library,
+ * which is available on BSD systems and Mac OS X, and can be installed on
+ * most Linux systems. Editline is a replacement for the GNU Readline
+ * library, with a more liberal BSD-style license. Linking Editline into
+ * your code (and, similarly, using this Java interface to it) will not
+ * change the license you have assigned to your code.</p>
+ *
+ * <p>An <tt>EditLine</tt> object is instantiated via a factory method.
+ * The finalizer for the returned object restores the terminal environment,
+ * if you don't do it yourself--but you're better off doing it yourself.
+ * Here's the typical usage pattern:</p>
+ *
+ * <blockquote><pre>
+ * EditLine el = EditLine.init("myprogram")
+ * try
+ * {
+ *     el.setPrompt("myprogram> ");
+ *     String line;
+ *     while ((line = el.getString()) != null)
+ *     {
+ *         // ...
+ *     }
+ * }
+ * finally
+ * {
+ *     el.cleanup();
+ * }
+ * </pre></blockquote>
+ *
+ * <h2>Restrictions</h2>
+ *
+ * This Java wrapper does not expose all the functionality of the underlying
+ * Editline library.
+ *
+ * <ul>
+ *  <li> This wrapper does not support the use of alternate file descriptors.
+ *       All <tt>EditLine</tt> instances use standard input, output and error.
+ *       While this library theoretically permits multiple <tt>EditLine</tt>
+ *       instances to be constructed, all such instances use the same file
+ *       descriptors (which limits the utility of having multiple instances).
+ *       In practice, this is generally not a problem.
+ *  <li> This class does not currently expose the Editline library's 
+ *       tokenizer functionality (e.g., the <tt>tok_init()</tt>,
+ *       <tt>tok_line()</tt>, <tt>tok_str()</tt>, <tt>tok_reset()</tt> and
+ *       <tt>tok_end()</tt> functions).
+ *  <li> Signal handling is currently omitted, as it doesn't play well with
+ *       the JVM.
+ *  <li> Certain Editline functions are not currently exposed, among
+ *       them:
+ *       <ul>
+ *         <li> <tt>el_insertstr()</tt>
+ *         <li> <tt>el_deletestr()</tt>
+ *         <li> <tt>el_set()</tt>
+ *         <li> <tt>el_get()</tt>
+ *         <li> <tt>el_getc()</tt>
+ *         <li> <tt>el_reset()</tt>
+ *         <li> <tt>el_push()</tt>
+ *       </ul>
+ * </ul>
  */
 public class EditLine
 {
@@ -66,6 +152,9 @@ public class EditLine
                                 Constructor
     \*----------------------------------------------------------------------*/
 
+    /**
+     * Construct a new EditLine instance.
+     */
     private EditLine()
     {
         initialized = true;
@@ -75,6 +164,9 @@ public class EditLine
                                 Destructor
     \*----------------------------------------------------------------------*/
 
+    /**
+     * Finalizer.
+     */
     protected void finalize()
     {
         cleanup();
@@ -84,6 +176,18 @@ public class EditLine
                               Static Methods
     \*----------------------------------------------------------------------*/
 
+    /**
+     * Initialize a new <tt>EditLine</tt> instance.
+     *
+     * @param program   the calling program's name
+     * @param initFile  an intialization file of Editline directives,
+     *                  or null for none. This file is passed directly to
+     *                  the underlying Editline library's
+     *                  <tt>el_source()</tt> function. Consult the manual
+     *                  page for Editline for details.
+     *
+     * @return a new <tt>EditLine</tt> instance.
+     */
     public static EditLine init(String program, String initFile)
     {
         EditLine el = new EditLine();
