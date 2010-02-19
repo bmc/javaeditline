@@ -16,5 +16,5 @@ README.html:	README.md
 	 echo "</body></html>" ) >README.html
 
 clean:
-	$(MAKE) -c src clean
+	$(MAKE) -C src clean
 	rm -f README.html
