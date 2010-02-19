@@ -83,7 +83,7 @@ Editline library.
   - `el_reset()`
   - `el_push()`
 
-## Building
+## Building Java EditLine
 
 After unpacking the source, change your working directory to `src`. The
 code uses GNU `make` to build. The `make` logic is split into two pieces:
@@ -104,6 +104,16 @@ How to build:
   for Ubuntu: `apt-get install libedit-dev`.
 * Type `make`. If it's successful, you'll get a shared library and a jar
   file.
+
+## Deploying Java EditLine
+
+Once you have succcessfully built Java EditLine:
+
+- Ensure that the shared library (`libjavaeditline.jnilib` on the Mac,
+  `libjavaeditline.so` on other systems) is in your LD_LIBRARY_PATH.
+- Ensure that `javaeditline.jar` is in your CLASSPATH.
+
+That should be all you need to do.
 
 ## License and Copyright
 

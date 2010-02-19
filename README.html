@@ -26,10 +26,11 @@ public class MyProgram
         EditLine el = EditLine.init("myprogram")
         try
         {
-            el.setPrompt("myprogram&gt; ");
+            el.setPrompt("myprogram? ");
+            el.setHistorySize(1024);
 
             String line;
-            while ((line = el.getString()) != null)
+            while ((line = el.getLine()) != null)
             {
                 // ...
             }
@@ -82,7 +83,7 @@ functionality (e.g., the <code>tok_init()</code>, <code>tok_line()</code>, <code
 </ul></li>
 </ul>
 
-<h2>Building</h2>
+<h2>Building Java EditLine</h2>
 
 <p>After unpacking the source, change your working directory to <code>src</code>. The
 code uses GNU <code>make</code> to build. The <code>make</code> logic is split into two pieces:</p>
@@ -106,6 +107,14 @@ appropriate version of Editline in your distro's repository. For example,
 for Ubuntu: <code>apt-get install libedit-dev</code>.</li>
 <li>Type <code>make</code>. If it's successful, you'll get a shared library and a jar
 file.</li>
+</ul>
+
+<h2>Deploying Java EditLine</h2>
+
+<p>Once you have succcessfully built Java EditLine:</p>
+
+<ul>
+<li>Ensure that the shared library (libEditLine.so</li>
 </ul>
 
 <h2>License and Copyright</h2>

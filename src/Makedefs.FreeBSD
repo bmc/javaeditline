@@ -7,5 +7,5 @@ JAVA_HOME = /usr/lib/jvm/java-6-sun
 CFLAGS   = -fPIC -O2 -pthread -D_REENTRANT
 LDFLAGS = -z defs -Wl,-O1 -Wl,-soname=libEditLine.so -static-libgcc \
           -shared -mimpure-text -lc -ledit
-SOLIB    = libEditLine.so
+SOLIB    = lib$(SOLIB_NAME).so
 INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/freebsd

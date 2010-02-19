@@ -123,7 +123,7 @@ public class EditLine
 
     static
     {
-        System.loadLibrary("EditLine");
+        System.loadLibrary("javaeditline");
     }
 
     /*----------------------------------------------------------------------*\
