@@ -55,6 +55,7 @@ native: $(SOLIB)
 test: TestDriver.class
 
 $(CLASS_PKGDIR)/EditLine.class: EditLine.java
+	mkdir $(CLASSDIR)
 	$(JAVAC) -d $(CLASSDIR) -cp $(CLASSDIR) EditLine.java
 
 $(SOLIB): org_clapper_editline_EditLine.o
