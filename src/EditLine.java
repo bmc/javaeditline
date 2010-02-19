@@ -402,6 +402,16 @@ public class EditLine
     }
 
     /**
+     * Get the most recent line in the history.
+     *
+     * @return the most recent line, or null if the history is empty.
+     */
+    public String currentHistoryLine()
+    {
+        return n_history_current(handle);
+    }
+
+    /**
      * Get the contents of the history buffer.
      *
      * @return the lines in the history buffer. An empty array is returned if
@@ -517,7 +527,7 @@ public class EditLine
     private native static void n_history_clear(long handle);
     private native static void n_history_append(long handle, String line);
     private native static String[] n_history_get_all(long handle);
+    private native static String n_history_current(long handle);
     private native static void n_history_set_unique(long handle, boolean on);
     private native static void n_el_parse(long handle, String[] args, int len);
 }
-

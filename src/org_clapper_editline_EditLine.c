@@ -474,13 +474,31 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1append
 
     else
     {
-    EditLine *el = jlong2elPointer(handle);
+        EditLine *el = jlong2elPointer(handle);
         HistEvent ev;
         ev.str = str;
         jEditLineData *data = get_data(el);
         history(data->history, &ev, H_ENTER, str);
         (*env)->ReleaseStringUTFChars(env, line, str);
     }
+}
+
+/*
+ * Class:  org_clapper_editline_EditLine
+ * Method: static String n_history_current(long handle)
+ */
+JNIEXPORT jstring JNICALL Java_org_clapper_editline_EditLine_n_1history_1current
+  (JNIEnv *env, jclass cls, jlong handle)
+{
+    EditLine *el = jlong2elPointer(handle);
+    jEditLineData *data = get_data(el);
+    jstring result = NULL;
+    HistEvent ev;
+
+    if (history(data->history, &ev, H_FIRST) != -1)
+        result = (*env)->NewStringUTF(env, ev.str);
+
+    return result;
 }
 
 /*

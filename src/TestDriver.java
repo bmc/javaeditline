@@ -98,14 +98,27 @@ public class TestDriver implements EditLine.CompletionHandler
         String line;
         while ((line = e.getLine()) != null)
         {
-            System.out.println("Got: \"" + line + "\"");
+            String tline = line.trim();
+            if (tline.equals("!!"))
+            {
+                line = e.currentHistoryLine();
+                if (line == null)
+                {
+                    System.out.println("Empty history.");
+                    continue;
+                }
+
+                tline = line.trim();
+            }
+
             e.addToHistory(line);
-            if (line.equals("h"))
+            if (tline.equals("h"))
             {
                 for (String s: e.getHistory())
                     System.out.println(s);
             }
 
+            System.out.println("Got: \"" + line + "\"");
             e.setPrompt("[" + e.historyTotal() + "] Well? ");
         }
 

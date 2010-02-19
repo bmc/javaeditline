@@ -1,3 +1,12 @@
+Java EditLine Change Log
+===========================================================================
+
+Version 0.2 (...)
+
+- Added currentHistoryLine() method and support JNI functions.
+
+---------------------------------------------------------------------------
+
 Version 0.1.1 (19 February, 2010)
 
 - Changed completion handling to support multiple possible completions.
