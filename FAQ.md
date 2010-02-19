@@ -12,10 +12,13 @@ A.1. For several reasons.
 
 * Java Readline has not been updated since 2003.
 
+---
 
 Q.2. Well, why don't you fix Java Readline, instead?
 
 A.2. Because I wanted to start fresh, with a new API.
+
+---
 
 Q.3. What about [JLine][jline]?
 
@@ -23,6 +26,8 @@ A.3. JLine is certainly useful, especially since it works on Unix-like systems
      and on Windows. However, it isn't as functionally complete as
      Editline. For instance, it isn't as configurable, and it doesn't
      support breadth of editing commands that Editline supports.
+
+---
 
 Q.4. Why use [Editline][editline], instead of [GNU Readline][readline]?
 
