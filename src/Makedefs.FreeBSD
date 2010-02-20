@@ -2,10 +2,11 @@
 # FreeBSD make definitions
 # ---------------------------------------------------------------------------
 
-JAVA_HOME = /usr/lib/jvm/java-6-sun
+ifeq "$(JAVA_HOME)" ""
+JAVA_HOME = /usr/local/diablo-jdk1.6.0
+endif
 
 CFLAGS   = -fPIC -O2 -pthread -D_REENTRANT
-LDFLAGS = -z defs -Wl,-O1 -Wl,-soname=libEditLine.so -static-libgcc \
-          -shared -mimpure-text -lc -ledit
+LDFLAGS = -shared -ledit
 SOLIB    = lib$(SOLIB_NAME).so
 INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/freebsd
