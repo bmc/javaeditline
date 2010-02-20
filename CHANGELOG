@@ -1,7 +1,7 @@
 Java EditLine Change Log
 ===========================================================================
 
-Version 0.2 (...)
+Version 0.2 (20 February, 2010)
 
 - Added currentHistoryLine() method and support JNI functions.
 - Fixed Makedefs.FreeBSD to allow code to build on FreeBSD with the
