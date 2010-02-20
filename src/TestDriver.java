@@ -47,11 +47,20 @@ public class TestDriver implements EditLine.CompletionHandler
     private String[] POSSIBLE_COMPLETIONS = new String[]
     {
         "alice",
+        "alistair",
         "betty",
+        "bert",
         "bob",
-        "linux",
+        "coozin",
+        "cousin",
         "freebsd",
-        "winders"
+        "freelander",
+        "linux",
+        "linus",
+        "solaris",
+        "slowlaris",
+        "winders",
+        "windows"
     };
 
     private String[] TO_ARRAY_PROTOTYPE = new String[0];
@@ -74,7 +83,12 @@ public class TestDriver implements EditLine.CompletionHandler
             }
 
             if (completions.size() > 0)
-                result = completions.toArray(TO_ARRAY_PROTOTYPE);
+            {
+                // Don't trust completions.toArray().
+                result = new String[completions.size()];
+                for (int i = 0; i < completions.size(); i++)
+                    result[i] = completions.get(i);
+            }
         }
 
         return result;
@@ -86,6 +100,7 @@ public class TestDriver implements EditLine.CompletionHandler
         e.setHistorySize(100);
         e.setHistoryUnique(true);
         e.setCompletionHandler(this);
+        e.setMaxShownCompletions(POSSIBLE_COMPLETIONS.length / 4);
 
         File historyFile = new File("test.history");
         if (historyFile.exists())

@@ -1,6 +1,18 @@
 Java EditLine Change Log
 ===========================================================================
 
+Version 0.3 (...)
+
+- Addressed Issue #1: When there are multiple possible completions for a
+  string, the completion logic now adds the common leading substring (if any)
+  to the buffer.
+- Messages emitted by the JNI code now to go stderr, not stdout.
+- The maximum number of displayed possible completions can now be set via
+  accessor methods on the EditLine class. (Previously, it was hard-coded to
+  30.)
+
+---------------------------------------------------------------------------
+
 Version 0.2 (20 February, 2010)
 
 - Added currentHistoryLine() method and support JNI functions.

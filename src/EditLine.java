@@ -110,7 +110,7 @@ public class EditLine
     \*----------------------------------------------------------------------*/
 
     private static final String INITIAL_PROMPT = "? ";
-    public static final String VERSION = "0.2";
+    public static final String VERSION = "0.3";
 
     /*----------------------------------------------------------------------*\
                             Instance Variables
@@ -121,6 +121,7 @@ public class EditLine
     private boolean historyUnique = false;
     private long handle = 0;
     private String currentPrompt = null;
+    private int maxShownCompletions = 30;
 
     /*----------------------------------------------------------------------*\
                            Static Initialization
@@ -507,6 +508,31 @@ public class EditLine
         historyUnique = unique;
     }
 
+    /**
+     * Get the maximum number of completions displayed, when more than one
+     * string could match a completed string. If there are more than that
+     * many matches, the code displays that many, followed by an ellipsis.
+     *
+     * @return  total to show
+     */
+    public int getMaxShownCompletions()
+    {
+        return n_el_get_max_shown_completions(handle);
+    }
+
+    /**
+     * Set the maximum number of completions displayed, when more than one
+     * string could match a completed string. If there are more than that
+     * many matches, the code displays that many, followed by an ellipsis.
+     *
+     * @param total  total to show
+     */
+    public void setMaxShownCompletions(int total)
+    {
+        n_el_set_max_shown_completions(handle, total);
+        this.maxShownCompletions = total;
+    }
+
     /*----------------------------------------------------------------------*\
                               Private Methods
     \*----------------------------------------------------------------------*/
@@ -535,6 +561,10 @@ public class EditLine
     private native static void n_el_end(long handle);
     private native static void n_el_set_prompt(long handle, String prompt);
     private native static String n_el_gets(long handle);
+    private native static void n_el_parse(long handle, String[] args, int len);
+    private native static int n_el_get_max_shown_completions(long handle);
+    private native static void n_el_set_max_shown_completions(long handle,
+                                                              int total);
     private native static int n_history_get_size(long handle);
     private native static void n_history_set_size(long handle, int size);
     private native static void n_history_clear(long handle);
@@ -542,5 +572,4 @@ public class EditLine
     private native static String[] n_history_get_all(long handle);
     private native static String n_history_current(long handle);
     private native static void n_history_set_unique(long handle, boolean on);
-    private native static void n_el_parse(long handle, String[] args, int len);
 }

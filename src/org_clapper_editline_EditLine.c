@@ -45,8 +45,8 @@
 
 #define min(a, b)  ((a) < (b) ? (a) : (b))
 
-#define PROMPT_MAX      128
-#define MAX_COMPLETIONS 30
+#define PROMPT_MAX              128
+#define DEFAULT_MAX_COMPLETIONS 30
 
 #define elPointer2jlong(handle) ((jlong) ((long) handle)) 
 #define jlong2elPointer(jl) ((EditLine *) ((long) jl))
@@ -66,6 +66,7 @@ typedef struct _jEditLineData
     jclass javaClass;
     jobject javaEditLine;
     jmethodID handleCompletionMethodID;
+    jint max_shown_completions;
 }
 jEditLineData;
 
@@ -74,6 +75,81 @@ static jEditLineData *get_data(EditLine *el)
     void *d;
     el_get(el, EL_CLIENTDATA, &d);
     return (jEditLineData *) d;
+}
+
+/**
+ * Determine the common first substring of an array of strings.
+ * Returns a malloc'd string the caller must free.
+ */
+static char *common_first_substring(JNIEnv *env,
+                                    jobjectArray strings,
+                                    int len,
+                                    int start)
+{
+    char *result = NULL;
+    jstring js;
+    const char *first;
+
+    if (len == 0)
+        ;
+
+    else if (len == 1)
+    {
+        js = (jstring) (*env)->GetObjectArrayElement(env, strings, start);
+        first = (*env)->GetStringUTFChars(env, js, NULL);
+        result = strdup(first);
+        (*env)->ReleaseStringUTFChars(env, js, first);
+    }
+
+    else
+    {
+        char *subcommon = common_first_substring(env,
+                                                 strings,
+                                                 len - 1,
+                                                 start + 1);
+        if (subcommon == NULL)
+            result = NULL;
+
+        else
+        {
+            js = (jstring) (*env)->GetObjectArrayElement(env, strings, start);
+            first = (*env)->GetStringUTFChars(env, js, NULL);
+            int first_len = strlen(first);
+            int subcommon_len = strlen(subcommon);
+
+            if ((first_len == 0) || (subcommon_len == 0))
+                result = NULL;
+
+            else
+            {
+                int shortest = min(subcommon_len, first_len);
+                int i;
+                int total = 0;
+                char *s;
+                const char *f;
+                for (f = first, s = subcommon, i = 0;
+                     i < shortest;
+                     i++, s++, f++)
+                {
+                    if (*f != *s)
+                        break;
+                    total++;
+                }
+
+                if (total > 0)
+                {
+                    result = (char *) malloc(sizeof(char) * total + 1);
+                    strncpy(result, first, total);
+                    result[total] = '\0';
+                }
+            }
+
+            free(subcommon);
+            (*env)->ReleaseStringUTFChars(env, js, first);
+        }
+    }
+
+    return result;
 }
 
 static void set_prompt(EditLine *el, const char *new_prompt)
@@ -88,24 +164,29 @@ static const char *get_prompt(EditLine *el)
     return data->prompt;
 }
 
+static void replace_token(EditLine *el, int token_len, const char *new_token)
+{
+    el_deletestr(el, token_len);
+    el_insertstr(el, new_token);
+}
+
 static unsigned char 
 use_first_completion(JNIEnv *env,
                      EditLine *el,
                      jobjectArray completions,
-                     int tokenLength)
+                     int token_len)
 {
     unsigned char result = CC_ERROR;
 
     jstring js = (jstring) (*env)->GetObjectArrayElement(env, completions, 0);
     const char *cs = (*env)->GetStringUTFChars(env, js, NULL);
     if (cs == NULL)
-        puts("Out of memory (Java) during completion.");
+        fputs("Out of memory (Java) during completion.\n", stderr);
 
     else
     {
         result = CC_REFRESH;
-        el_deletestr(el, tokenLength);
-        el_insertstr(el, cs);
+        replace_token(el, token_len, cs);
         (*env)->ReleaseStringUTFChars(env, js, cs);
     }
 
@@ -115,10 +196,11 @@ use_first_completion(JNIEnv *env,
 static unsigned char
 show_completions(JNIEnv *env, EditLine *el, jobjectArray completions, int len)
 {
-    int to_show = min(len, MAX_COMPLETIONS);
+    jEditLineData *data = get_data(el);
+    int to_show = min(len, data->max_shown_completions);
     int i;
 
-    puts("\nPossible completions:");
+    fputs("\nPossible completions:\n", stderr);
     for (i = 0; i < to_show; i++)
     {
         jstring js = (jstring) (*env)->GetObjectArrayElement(env,
@@ -127,16 +209,16 @@ show_completions(JNIEnv *env, EditLine *el, jobjectArray completions, int len)
         const char *cs = (*env)->GetStringUTFChars(env, js, NULL);
         if (cs == NULL)
         {
-            puts("Out of memory (Java) during completion.");
+            fputs("Out of memory (Java) during completion.\n", stderr);
             break;
         }
 
-        puts(cs);
+        fprintf(stderr, "%s\n", cs);
         (*env)->ReleaseStringUTFChars(env, js, cs);
     }
 
     if (to_show < len)
-        puts("...");
+        fprintf(stderr, "[... %d more ...]\n", len - to_show);
 
     return CC_REDISPLAY;
 }
@@ -151,7 +233,7 @@ static unsigned char complete(EditLine *el, int ch)
     jstring jLine;
     jint jCursor;
     jstring jToken;
-    int tokenLength = 0;
+    int token_len = 0;
     
     if (lineInfo != NULL)
     {
@@ -175,18 +257,18 @@ static unsigned char complete(EditLine *el, int ch)
             }
         }
 
-	tokenLength = lineInfo->cursor - ptr;
+	token_len = lineInfo->cursor - ptr;
 
         /* Save it as a Java string. */
 
-        if (tokenLength == 0)
+        if (token_len == 0)
             jToken = (*env)->NewStringUTF(env, "");
 
         else
         {
-            char *token = (char *) malloc(tokenLength + 1);
-            strncpy(token, ptr, tokenLength);
-            token[tokenLength] = '\0';
+            char *token = (char *) malloc(token_len + 1);
+            strncpy(token, ptr, token_len);
+            token[token_len] = '\0';
             jToken = (*env)->NewStringUTF(env, token);
             free(token);
         }
@@ -215,32 +297,25 @@ static unsigned char complete(EditLine *el, int ch)
     {
         /* You can't always trust the result of GetArrayLength(). */
 
-        jint jlen = (*env)->GetArrayLength(env, completions);
+        jint len = (*env)->GetArrayLength(env, completions);
 
         jstring js;
-        int len = 0;
-        for (len = 0; len < (int) jlen; len++)
-        {
-            js = (jstring) (*env)->GetObjectArrayElement(env,
-                                                         completions,
-                                                         len);
-            if (js == NULL)
-                break;
-        }
 
+        const char *s;
         switch ((int) len)
         {
             case 0:
                 break;
 
             case 1:
-                result = use_first_completion(env, el, completions,
-                                              tokenLength);
+                result = use_first_completion(env, el, completions, token_len);
                 break;
 
             default:
                 result = show_completions(env, el, completions, len);
-                fputs(lineInfo->buffer, stdout);
+                s = common_first_substring(env, completions, len, 0);
+                if (s != NULL)
+                    replace_token(el, token_len, s);
                 break;
         }
     }
@@ -279,6 +354,7 @@ JNIEXPORT jlong JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
         data->env = env;
         data->javaClass = (*env)->NewGlobalRef(env, cls);
         data->javaEditLine = (*env)->NewGlobalRef(env, javaEditLine);
+        data->max_shown_completions = DEFAULT_MAX_COMPLETIONS;
         data->handleCompletionMethodID = (*env)->GetMethodID(
             env, cls,
             "handleCompletion",
@@ -378,6 +454,33 @@ JNIEXPORT jstring JNICALL Java_org_clapper_editline_EditLine_n_1el_1gets
 
     return result;
 }
+
+/*
+ * Class:  org_clapper_editline_EditLine
+ * Method: static int n_el_get_max_shown_completions(long handle); 
+ */
+JNIEXPORT jint JNICALL
+Java_org_clapper_editline_EditLine_n_1el_1get_1max_1shown_1completions
+  (JNIEnv *env, jclass cls, jlong handle)
+{
+    EditLine *el = jlong2elPointer(handle);
+    jEditLineData *data = get_data(el);
+    return data->max_shown_completions;
+}
+
+/*
+ * Class:  org_clapper_editline_EditLine
+ * Method: static void n_el_get_max_shown_completions(long handle, int total)
+ */
+JNIEXPORT void JNICALL
+Java_org_clapper_editline_EditLine_n_1el_1set_1max_1shown_1completions
+    (JNIEnv *env, jclass cls, jlong handle, jint total)
+{
+    EditLine *el = jlong2elPointer(handle);
+    jEditLineData *data = get_data(el);
+    data->max_shown_completions = total;
+}
+
 
 /*
  * Class:  org_clapper_editline_EditLine
