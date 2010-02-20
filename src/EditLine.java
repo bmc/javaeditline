@@ -523,28 +523,7 @@ public class EditLine
 
     private void source(File initFile)
     {
-        /*
-          Should be done automatically, but doesn't seem to be on Linux.
-        */
-        if (initFile == null)
-        {
-            // First try current directory. Then try $HOME/.editrc.
-
-            initFile = new File(".editrc");
-            if (! initFile.exists())
-            {
-                String home = System.getProperty("user.home");
-                if (home != null)
-                {
-                    initFile = new File(home + "/.editrc");
-                    if (! initFile.exists())
-                        initFile = null;
-                }
-            }
-        }
-
-        if (initFile != null)
-            n_el_source(handle, initFile.getPath());
+        n_el_source(handle, initFile == null ? null : initFile.getPath());
     }
 
     /*----------------------------------------------------------------------*\

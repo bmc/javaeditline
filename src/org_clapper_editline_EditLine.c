@@ -306,7 +306,10 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1el_1source
     (JNIEnv *env, jclass cls, jlong handle, jstring javaPath)
 {
     EditLine *el = jlong2elPointer(handle);
-    if (javaPath != NULL)
+    if (javaPath == NULL)
+        el_source(el, NULL);
+
+    else
     {
         const char *path = (*env)->GetStringUTFChars(env, javaPath, NULL);
         if (path == NULL)
