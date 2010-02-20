@@ -53,9 +53,13 @@ usage pattern:
 This package is only known to work on Unix-like operating systems. I have
 tested it on:
 
-- Linux (Ubuntu 9)
-- FreeBSD 8
-- Mac OS X (10.4)
+- Ubuntu Linux 9, with the [OpenJDK 6][openjdk] and the Sun Java 6 JDKs
+- FreeBSD 8.0-RELEASE, with the Diablo 1.6.0 JDK
+- Mac OS X 10.4 (Tiger), with the [SoyLatte Java 6][soylatte] and
+  [OpenJDK 6][openjdk] JDKs
+
+[soylatte]: http://landonf.bikemonkey.org/static/soylatte/
+[openjdk]: http://www.openjdk.org/
 
 This Java wrapper does not expose all the functionality of the underlying
 Editline library.
@@ -91,7 +95,8 @@ code uses GNU `make` to build. The `make` logic is split into two pieces:
 * A platform-independent `Makefile`.
 * Architecture-specific build definitions. These definitions are in the
   `Makedefs.*` files. The suffix for those files is determined by the
-  `uname -s` command.
+  `uname -s` command. There are existing definitions files for Darwin
+  (Mac OS X), FreeBSD, and Linux.
 
 How to build:
 
@@ -101,9 +106,11 @@ How to build:
 * Install the Editline library, if necessary. This is *not* necessary on
   FreeBSD or Mac OS X. For Linux distributions, you can usually find an
   appropriate version of Editline in your distro's repository. For example,
-  for Ubuntu: `apt-get install libedit-dev`.
-* Type `make`. If it's successful, you'll get a shared library and a jar
-  file.
+  for Ubuntu, you can install it with: `apt-get install libedit-dev`.
+* On FreeBSD, make sure GNU Make is installed.
+* Type `make` (`gmake` on FreeBSD). If it's successful, you'll get a
+  `libjavaeditline.so` shared library (`libjavaeditline.jnilib` on the Mac)
+  and a `javaeditline.jar` jar file.
 
 ## Deploying Java EditLine
 

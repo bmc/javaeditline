@@ -51,9 +51,10 @@ public class MyProgram
 tested it on:</p>
 
 <ul>
-<li>Linux (Ubuntu 9)</li>
-<li>FreeBSD 8</li>
-<li>Mac OS X (10.4)</li>
+<li>Ubuntu Linux 9, with the <a href="http://www.openjdk.org/">OpenJDK 6</a> and the Sun Java 6 JDKs</li>
+<li>FreeBSD 8.0-RELEASE, with the Diablo 1.6.0 JDK</li>
+<li>Mac OS X 10.4 (Tiger), with the <a href="http://landonf.bikemonkey.org/static/soylatte/">SoyLatte Java 6</a> and
+<a href="http://www.openjdk.org/">OpenJDK 6</a> JDKs</li>
 </ul>
 
 <p>This Java wrapper does not expose all the functionality of the underlying
@@ -92,7 +93,8 @@ code uses GNU <code>make</code> to build. The <code>make</code> logic is split i
 <li>A platform-independent <code>Makefile</code>.</li>
 <li>Architecture-specific build definitions. These definitions are in the
 <code>Makedefs.*</code> files. The suffix for those files is determined by the
-<code>uname -s</code> command.</li>
+<code>uname -s</code> command. There are existing definitions files for Darwin
+(Mac OS X), FreeBSD, and Linux.</li>
 </ul>
 
 <p>How to build:</p>
@@ -104,9 +106,11 @@ are errors.)</li>
 <li>Install the Editline library, if necessary. This is <em>not</em> necessary on
 FreeBSD or Mac OS X. For Linux distributions, you can usually find an
 appropriate version of Editline in your distro's repository. For example,
-for Ubuntu: <code>apt-get install libedit-dev</code>.</li>
-<li>Type <code>make</code>. If it's successful, you'll get a shared library and a jar
-file.</li>
+for Ubuntu, you can install it with: <code>apt-get install libedit-dev</code>.</li>
+<li>On FreeBSD, make sure GNU Make is installed.</li>
+<li>Type <code>make</code> (<code>gmake</code> on FreeBSD). If it's successful, you'll get a
+<code>libjavaeditline.so</code> shared library (<code>libjavaeditline.jnilib</code> on the Mac)
+and a <code>javaeditline.jar</code> jar file.</li>
 </ul>
 
 <h2>Deploying Java EditLine</h2>
