@@ -97,7 +97,8 @@ public class TestDriver implements EditLine.CompletionHandler
     void run() throws IOException
     {
         EditLine e = EditLine.init("test", new File("editrc"));
-        e.setHistorySize(100);
+        e.setHistorySize(10);
+        System.out.println("Max history=" + e.getHistorySize());
         e.setHistoryUnique(true);
         e.setCompletionHandler(this);
         e.setMaxShownCompletions(POSSIBLE_COMPLETIONS.length / 4);

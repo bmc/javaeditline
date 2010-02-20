@@ -10,6 +10,7 @@ Version 0.3 (...)
 - The maximum number of displayed possible completions can now be set via
   accessor methods on the EditLine class. (Previously, it was hard-coded to
   30.)
+- Fixed getMaxHistory() to return the correct value.
 
 ---------------------------------------------------------------------------
 

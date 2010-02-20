@@ -67,6 +67,7 @@ typedef struct _jEditLineData
     jobject javaEditLine;
     jmethodID handleCompletionMethodID;
     jint max_shown_completions;
+    jint max_history_size;
 }
 jEditLineData;
 
@@ -355,6 +356,7 @@ JNIEXPORT jlong JNICALL Java_org_clapper_editline_EditLine_n_1el_1init
         data->javaClass = (*env)->NewGlobalRef(env, cls);
         data->javaEditLine = (*env)->NewGlobalRef(env, javaEditLine);
         data->max_shown_completions = DEFAULT_MAX_COMPLETIONS;
+        data->max_history_size = 0;
         data->handleCompletionMethodID = (*env)->GetMethodID(
             env, cls,
             "handleCompletion",
@@ -521,20 +523,8 @@ JNIEXPORT jint JNICALL Java_org_clapper_editline_EditLine_n_1history_1get_1size
 {
     EditLine *el = jlong2elPointer(handle);
     jEditLineData *data = get_data(el);
-    HistEvent ev;
-    /**
-       H_GETSIZE doesn't seem to work on the Mac.
 
-    int result = (jint) history(data->history, &ev, H_GETSIZE);
-    */
-    int total = 0;
-    int rc;
-    for (rc = history(data->history, &ev, H_LAST);
-         rc != -1;
-         rc = history(data->history, &ev, H_PREV))
-        total++;
-
-    return total;
+    return data->max_history_size;
 }
 
 /*
@@ -548,6 +538,7 @@ JNIEXPORT void JNICALL Java_org_clapper_editline_EditLine_n_1history_1set_1size
     jEditLineData *data = get_data(el);
     HistEvent ev;
     history(data->history, &ev, H_SETSIZE, (int) newSize);
+    data->max_history_size = newSize;
 }
 
 /*
