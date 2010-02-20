@@ -199,11 +199,11 @@ public class EditLine
      *
      * @return a new <tt>EditLine</tt> instance.
      */
-    public static EditLine init(String program, String initFile)
+    public static EditLine init(String program, File initFile)
     {
         EditLine el = new EditLine();
         el.handle = n_el_init(program, el);
-        n_el_source(el.handle, initFile);
+        el.source(initFile);
         el.setPrompt(INITIAL_PROMPT);
 
         // Bind TAB to complete.
@@ -519,6 +519,32 @@ public class EditLine
             result = completionHandler.complete(token, line, cursor);
 
         return result;
+    }
+
+    private void source(File initFile)
+    {
+        /*
+          Should be done automatically, but doesn't seem to be on Linux.
+        */
+        if (initFile == null)
+        {
+            // First try current directory. Then try $HOME/.editrc.
+
+            initFile = new File(".editrc");
+            if (! initFile.exists())
+            {
+                String home = System.getProperty("user.home");
+                if (home != null)
+                {
+                    initFile = new File(home + "/.editrc");
+                    if (! initFile.exists())
+                        initFile = null;
+                }
+            }
+        }
+
+        if (initFile != null)
+            n_el_source(handle, initFile.getPath());
     }
 
     /*----------------------------------------------------------------------*\
