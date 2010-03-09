@@ -40,6 +40,7 @@ import java.io.FileReader;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * <p>This class provides a Java interface to the BSD Editline library,
@@ -123,6 +124,9 @@ public class EditLine
     private String currentPrompt = null;
     private int maxShownCompletions = 30;
 
+    private PossibleCompletionsDisplayer completionsDisplayer =
+        new DefaultCompletionDisplayer(maxShownCompletions);
+
     /*----------------------------------------------------------------------*\
                            Static Initialization
     \*----------------------------------------------------------------------*/
@@ -158,6 +162,53 @@ public class EditLine
          *         possible completions.
          */
         public String[] complete(String token, String line, int cursor);
+    }
+
+    /**
+     * Defines the interface for a class that will display multiple completions,
+     * when multiple completions exist for a token. The default handler
+     * simply displays the completions, up to a fixed number, one per line.
+     * A caller is free to register a handler that is more appropriate for
+     * its application.
+     */
+    public interface PossibleCompletionsDisplayer
+    {
+        /**
+         * Called by EditLine to show the list of possible completions, when
+         * multiple completions exist for a token.
+         *
+         * @param tokens  An <tt>Iterable</tt> of matching strings.
+         */
+        public void showCompletions(Iterable<String> tokens);
+    }
+
+    /**
+     * Default completion displayer.
+     */
+    private class DefaultCompletionDisplayer
+        implements PossibleCompletionsDisplayer
+    {
+        private int max;
+
+        DefaultCompletionDisplayer(int maxToShow)
+        {
+            this.max = maxToShow;
+        }
+
+        public void showCompletions(Iterable<String> tokens)
+        {
+            int total = 0;
+            System.err.println("\nPossible completions:");
+            for (String token : tokens)
+            {
+                total++;
+                if (total <= max)
+                    System.err.println(token);
+            }
+
+            if (total > max)
+                System.err.println("[..." + (total - max) + " more ...]");
+        }
     }
 
     /*----------------------------------------------------------------------*\
@@ -517,7 +568,7 @@ public class EditLine
      */
     public int getMaxShownCompletions()
     {
-        return n_el_get_max_shown_completions(handle);
+        return this.maxShownCompletions;
     }
 
     /**
@@ -529,13 +580,17 @@ public class EditLine
      */
     public void setMaxShownCompletions(int total)
     {
-        n_el_set_max_shown_completions(handle, total);
         this.maxShownCompletions = total;
     }
 
     /*----------------------------------------------------------------------*\
                               Private Methods
     \*----------------------------------------------------------------------*/
+
+    private void showCompletions(String[] tokens)
+    {
+        completionsDisplayer.showCompletions(Arrays.asList(tokens));
+    }
 
     private String[] handleCompletion(String token, String line, int cursor)
     {
@@ -562,9 +617,6 @@ public class EditLine
     private native static void n_el_set_prompt(long handle, String prompt);
     private native static String n_el_gets(long handle);
     private native static void n_el_parse(long handle, String[] args, int len);
-    private native static int n_el_get_max_shown_completions(long handle);
-    private native static void n_el_set_max_shown_completions(long handle,
-                                                              int total);
     private native static int n_history_get_size(long handle);
     private native static void n_history_set_size(long handle, int size);
     private native static void n_history_clear(long handle);
