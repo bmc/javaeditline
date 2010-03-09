@@ -1,7 +1,7 @@
 Java EditLine Change Log
 ===========================================================================
 
-Version 0.3 (...)
+Version 0.3 (9 March, 2010)
 
 - Addressed Issue #1: When there are multiple possible completions for a
   string, the completion logic now adds the common leading substring (if any)
