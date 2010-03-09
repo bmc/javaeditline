@@ -125,7 +125,7 @@ public class EditLine
     private int maxShownCompletions = 30;
 
     private PossibleCompletionsDisplayer completionsDisplayer =
-        new DefaultCompletionDisplayer(maxShownCompletions);
+        new DefaultCompletionDisplayer();
 
     /*----------------------------------------------------------------------*\
                            Static Initialization
@@ -188,15 +188,13 @@ public class EditLine
     private class DefaultCompletionDisplayer
         implements PossibleCompletionsDisplayer
     {
-        private int max;
-
-        DefaultCompletionDisplayer(int maxToShow)
+        DefaultCompletionDisplayer()
         {
-            this.max = maxToShow;
         }
 
         public void showCompletions(Iterable<String> tokens)
         {
+            int max = EditLine.this.getMaxShownCompletions();
             int total = 0;
             System.err.println("\nPossible completions:");
             for (String token : tokens)
@@ -334,6 +332,33 @@ public class EditLine
     public void clearCompletionHandler()
     {
         setCompletionHandler(null);
+    }
+
+    /**
+     * Set (replace) the completions displayer. The completion displayer is the
+     * object whose <tt>showCompletions()</tt> method is called when the user
+     * presses the completion key (usually the TAB key) and there are multiple
+     * completions for the current token. The default displayer just lists up
+     * to <tt>getMaxShownCompletions()</tt> matches, one per line.
+     *
+     * @param handler the handler, or null to clear the handler
+     */
+    public void setCompletionsDisplayer(PossibleCompletionsDisplayer handler)
+    {
+        if (handler == null)
+            this.completionsDisplayer = new DefaultCompletionDisplayer();
+        else
+            this.completionsDisplayer = handler;
+    }
+
+    /**
+     * Clear's the completions displayer. This method is just a convenience for:
+     *
+     * <blockquote><pre>setCompletionsDisplayer(null);</pre></blockquote>
+     */
+    public void clearCompletionsDisplayer()
+    {
+        setCompletionsDisplayer(null);
     }
 
     /**
