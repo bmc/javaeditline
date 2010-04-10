@@ -89,6 +89,12 @@ Once you have succcessfully built Java EditLine:
 
 That should be all you need to do.
 
+## Frequently Asked Questions
+
+Please see the [FAQ][].
+
+[FAQ]: FAQ.html
+
 ## License and Copyright
 
 This software is released under a BSD license. See the accompanying
