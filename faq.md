@@ -1,5 +1,7 @@
-Java EditLine FAQ
-=================
+---
+title: Java EditLine FAQ
+layout: default
+---
 
 **Why not just use [Java Readline][javareadline]?**
 
