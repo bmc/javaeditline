@@ -93,7 +93,7 @@ That should be all you need to do.
 
 Please see the [FAQ][].
 
-[FAQ]: FAQ.html
+[FAQ]: faq.html
 
 ## License and Copyright
 
