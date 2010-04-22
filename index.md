@@ -40,7 +40,6 @@ There are two ways to get the source code:
         $ git clone git://github.com/bmc/fortune.git
         $ git clone http://github.com/bmc/fortune.git
 
-
 [downloads page]: http://github.com/bmc/javaeditline/downloads
 
 ## Building Java EditLine
@@ -100,5 +99,16 @@ Please see the [FAQ][].
 This software is released under a BSD license. See the accompanying
 [license file][] for complete details.
 
+## Patches
+
+I gladly accept patches from their original authors. Feel free to email
+patches to me or to fork the [GitHub repository][] and send me a pull
+request. Along with any patch you send:
+
+* Please state that the patch is your original work.
+* Please indicate that you license the work to the Java EditLine
+  project under a [BSD License][license file].
+
+[GitHub repository]: http://github.com/bmc/javaeditline
 [license file]: license.html
 
