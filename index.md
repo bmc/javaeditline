@@ -42,6 +42,46 @@ There are two ways to get the source code:
 
 [downloads page]: http://github.com/bmc/javaeditline/downloads
 
+## Restrictions
+
+This package is only known to work on Unix-like operating systems. I have
+tested it on:
+
+- Ubuntu Linux 9 and 10, with the [OpenJDK 6][openjdk] and the Oracle (Sun)
+  Java 6 JDKs.
+- FreeBSD 8.0-RELEASE, with the Diablo 1.6.0 JDK
+- Mac OS X 10.4 (Tiger) and 10.6 (Snow Leopard) with the
+  [SoyLatte Java 6][soylatte], [OpenJDK 6][openjdk], and Apple Java 6 JDKs.
+
+[soylatte]: http://landonf.bikemonkey.org/static/soylatte/
+[openjdk]: http://www.openjdk.org/
+
+This Java wrapper does not expose all the functionality of the underlying
+Editline library.
+
+* This wrapper does not support the use of alternate file descriptors. All
+  Editline instances use standard input, output and error. While this
+  library theoretically permits multiple Editline instances to be
+  constructed, all such instances use the same file descriptors (which
+  limits the utility of having multiple instances). In practice, this is
+  generally not a problem.
+
+* This class does not currently expose the Editline library's tokenizer
+  functionality (e.g., the `tok_init()`, `tok_line()`, `tok_str()`,
+  `tok_reset()` and `tok_end()` functions).
+
+* Signal handling is currently omitted, as it doesn't play well with the JVM.
+
+* Certain Editline functions are not currently exposed, among them:
+
+  - `el_insertstr()`
+  - `el_deletestr()`
+  - `el_set()`
+  - `el_get()`
+  - `el_getc()`
+  - `el_reset()`
+  - `el_push()`
+
 ## Building Java EditLine
 
 ### Overview
