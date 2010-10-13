@@ -1,0 +1,9 @@
+apidocs
+src/classes
+src/javaeditline.jar
+src/libjavaeditline.jnilib
+src/org_clapper_editline_EditLine.h
+src/org_clapper_editline_EditLine.o
+src/org_clapper_editline_EditLine_CompletionHandler.h
+src/org_clapper_editline_EditLine_DefaultCompletionDisplayer.h
+src/org_clapper_editline_EditLine_PossibleCompletionsDisplayer.h

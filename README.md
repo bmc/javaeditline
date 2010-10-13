@@ -53,10 +53,11 @@ usage pattern:
 This package is only known to work on Unix-like operating systems. I have
 tested it on:
 
-- Ubuntu Linux 9, with the [OpenJDK 6][openjdk] and the Sun Java 6 JDKs
+- Ubuntu Linux 9 and 10, with the [OpenJDK 6][openjdk] and the Oracle (Sun)
+  Java 6 JDKs.
 - FreeBSD 8.0-RELEASE, with the Diablo 1.6.0 JDK
-- Mac OS X 10.4 (Tiger), with the [SoyLatte Java 6][soylatte] and
-  [OpenJDK 6][openjdk] JDKs
+- Mac OS X 10.4 (Tiger) and 10.6 (Snow Leopard) with the
+  [SoyLatte Java 6][soylatte], [OpenJDK 6][openjdk], and Apple Java 6 JDKs.
 
 [soylatte]: http://landonf.bikemonkey.org/static/soylatte/
 [openjdk]: http://www.openjdk.org/
