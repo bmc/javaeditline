@@ -37,8 +37,8 @@ There are two ways to get the source code:
 * Download a release (zip file or tarball) from the [downloads page][].
 * Clone a copy of the Git repository:
 
-        $ git clone git://github.com/bmc/fortune.git
-        $ git clone http://github.com/bmc/fortune.git
+        $ git clone git://github.com/bmc/javaeditline.git
+        $ git clone http://github.com/bmc/javaeditline.git
 
 
 [downloads page]: http://github.com/bmc/javaeditline/downloads
