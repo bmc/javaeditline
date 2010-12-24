@@ -40,8 +40,47 @@ There are two ways to get the source code:
         $ git clone git://github.com/bmc/javaeditline.git
         $ git clone http://github.com/bmc/javaeditline.git
 
-
 [downloads page]: http://github.com/bmc/javaeditline/downloads
+
+## Restrictions
+
+This package is only known to work on Unix-like operating systems. I have
+tested it on:
+
+- Ubuntu Linux 9 and 10, with the [OpenJDK 6][openjdk] and the Oracle (Sun)
+  Java 6 JDKs.
+- FreeBSD 8.0-RELEASE, with the Diablo 1.6.0 JDK
+- Mac OS X 10.4 (Tiger) and 10.6 (Snow Leopard) with the
+  [SoyLatte Java 6][soylatte], [OpenJDK 6][openjdk], and Apple Java 6 JDKs.
+
+[soylatte]: http://landonf.bikemonkey.org/static/soylatte/
+[openjdk]: http://www.openjdk.org/
+
+This Java wrapper does not expose all the functionality of the underlying
+Editline library.
+
+* This wrapper does not support the use of alternate file descriptors. All
+  Editline instances use standard input, output and error. While this
+  library theoretically permits multiple Editline instances to be
+  constructed, all such instances use the same file descriptors (which
+  limits the utility of having multiple instances). In practice, this is
+  generally not a problem.
+
+* This class does not currently expose the Editline library's tokenizer
+  functionality (e.g., the `tok_init()`, `tok_line()`, `tok_str()`,
+  `tok_reset()` and `tok_end()` functions).
+
+* Signal handling is currently omitted, as it doesn't play well with the JVM.
+
+* Certain Editline functions are not currently exposed, among them:
+
+  - `el_insertstr()`
+  - `el_deletestr()`
+  - `el_set()`
+  - `el_get()`
+  - `el_getc()`
+  - `el_reset()`
+  - `el_push()`
 
 ## Building Java EditLine
 
@@ -93,12 +132,23 @@ That should be all you need to do.
 
 Please see the [FAQ][].
 
-[FAQ]: FAQ.html
+[FAQ]: faq.html
 
 ## License and Copyright
 
 This software is released under a BSD license. See the accompanying
 [license file][] for complete details.
 
+## Patches
+
+I gladly accept patches from their original authors. Feel free to email
+patches to me or to fork the [GitHub repository][] and send me a pull
+request. Along with any patch you send:
+
+* Please state that the patch is your original work.
+* Please indicate that you license the work to the Java EditLine
+  project under a [BSD License][license file].
+
+[GitHub repository]: http://github.com/bmc/javaeditline
 [license file]: license.html
 
