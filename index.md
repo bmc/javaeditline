@@ -122,11 +122,20 @@ The *make* logic is split into two pieces:
 
 Once you have succcessfully built Java EditLine:
 
-- Ensure that the shared library (`libjavaeditline.jnilib` on the Mac,
-  `libjavaeditline.so` on other systems) is in your LD_LIBRARY_PATH.
+- Ensure that the directory containing the shared library is in your
+  `LD_LIBRARY_PATH`.
 - Ensure that `javaeditline.jar` is in your CLASSPATH.
 
 That should be all you need to do.
+
+**MAC OS X only**
+
+On Mac OS X, using `LD_LIBRARY_PATH` may not suffice. You may need to set
+`DYLD_LIBRARY_PATH`, instead. For instance, suppose you copied 
+`libjavaeditline.jnilib` to `$HOME/lib`. You may need to add this environment
+variable, to get SQLShell (well, Java, really) to see it:
+
+    export DYLD_LIBRARY_PATH=$HOME/lib
 
 ## Frequently Asked Questions
 
