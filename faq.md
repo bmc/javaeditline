@@ -3,7 +3,7 @@ title: Java EditLine FAQ
 layout: withTOC
 ---
 
-**Why not just use [Java Readline][javareadline]?**
+## Why not just use [Java Readline][javareadline]?
 
 For several reasons.
 
@@ -16,13 +16,13 @@ For several reasons.
 
 ---
 
-**Well, why don't you fix Java Readline, instead?**
+## Well, why don't you fix Java Readline, instead?
 
 Because I wanted to start fresh, with a new API.
 
 ---
 
-**What about [JLine][jline]?**
+## What about [JLine][jline]?
 
 JLine is certainly useful, especially since it works on Unix-like systems
 and on Windows. However, it isn't as functionally complete as Editline. For
@@ -31,7 +31,7 @@ editing commands that Editline supports.
 
 ---
 
-**Why use [Editline][editline], instead of [GNU Readline][readline]?**
+## Why use [Editline][editline], instead of [GNU Readline][readline]?**
 
 Largely because of licensing. Editline is BSD-licensed, whereas GNU
 Readline is GNU-licensed. The BSD license is more liberal.
@@ -43,7 +43,7 @@ Readline is GNU-licensed. The BSD license is more liberal.
 
 ---
 
-**I'm on a Mac, and I can't get Java to find the damned shared library!**
+## I'm on a Mac, and I can't get Java to find the damned shared library!
 
 On Mac OS X, using `LD_LIBRARY_PATH` may not suffice. You may need to set
 `DYLD_LIBRARY_PATH`, instead. For instance, suppose you copied 
