@@ -1,6 +1,6 @@
 ---
 title: Java EditLine FAQ
-layout: default
+layout: withTOC
 ---
 
 **Why not just use [Java Readline][javareadline]?**
