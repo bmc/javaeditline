@@ -1,0 +1,6 @@
+src/classes
+src/*.jar
+src/*.so
+src/*.o
+src/org_clapper_editline_EditLine*.[ch]
+
