@@ -1,6 +1,12 @@
 Java EditLine Change Log
 ===========================================================================
 
+Version 0.3.1 (14 May, 2012)
+
+- Extra _make_(1) definitions, to support Mac OS X Lion.
+
+----
+
 Version 0.3 (9 March, 2010)
 
 - Addressed Issue #1: When there are multiple possible completions for a
@@ -14,7 +20,7 @@ Version 0.3 (9 March, 2010)
   when multiple completion choices are possible.
 - Fixed getMaxHistory() to return the correct value.
 
----------------------------------------------------------------------------
+----
 
 Version 0.2 (20 February, 2010)
 
@@ -24,14 +30,14 @@ Version 0.2 (20 February, 2010)
 - Initializer now binds the TAB key to the Editline library's completion
   function, ed-complete.
 
----------------------------------------------------------------------------
+----
 
 Version 0.1.1 (19 February, 2010)
 
 - Changed completion handling to support multiple possible completions.
 - Generally fixed up completion handling. 
 
----------------------------------------------------------------------------
+----
 
 Version 0.1 (19 February, 2010)
 

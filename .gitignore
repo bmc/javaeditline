@@ -1,6 +1,7 @@
 src/classes
 src/*.jar
+src/*.jnilib
 src/*.so
 src/*.o
 src/org_clapper_editline_EditLine*.[ch]
-
+apidocs
