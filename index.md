@@ -52,9 +52,9 @@ for "tarball" in the above commands.
 
 ### Clone the Git repository
 
-  $ git clone git://github.com/bmc/javaeditline.git
-  $ cd javaeditline
-  $ git co RELEASE
+    $ git clone git://github.com/bmc/javaeditline.git
+    $ cd javaeditline
+    $ git co RELEASE
 
 
 ## Restrictions
@@ -158,7 +158,7 @@ This wrinkle is also noted in the [FAQ][].
 
 Please see the [FAQ][].
 
-[FAQ]: faq.html
+[FAQ]: https://github.com/bmc/javaeditline/blob/master/FAQ.md
 
 ## License and Copyright
 
