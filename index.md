@@ -41,11 +41,13 @@ Using *wget* and *tar*
 
     $ wget -O javaeditline.tar.gz https://api.github.com/repos/bmc/javaeditline/tarball/RELEASE
     $ tar xf javaeditline.tar.gz
+    $ cd bmc-javaeditline-*
 
 Using *curl* and *tar*:
 
     $ curl -L -o javaeditline.tar.gz https://api.github.com/repos/bmc/javaeditline/tarball/RELEASE
     $ tar xf javaeditline.tar.gz
+    $ cd bmc-javaeditline-*
 
 If you prefer, you can download a zip file, instead. Just substitute "zipball"
 for "tarball" in the above commands.
