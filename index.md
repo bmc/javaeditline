@@ -32,15 +32,30 @@ below.
 
 [Java Native Interface]: http://java.sun.com/docs/books/jni/
 
-There are two ways to get the source code:
+There are two ways to get the source code. In the commands below, substitute
+the current release tag (**release-0.3**) for the string "RELEASE".
 
-* Download a release (zip file or tarball) from the [downloads page][].
-* Clone a copy of the Git repository:
+### Download and unpack a tarball or zipball
 
-        $ git clone git://github.com/bmc/javaeditline.git
-        $ git clone http://github.com/bmc/javaeditline.git
+Using *wget* and *tar*
 
-[downloads page]: http://github.com/bmc/javaeditline/downloads
+    $ wget -O javaeditline.tar.gz https://api.github.com/repos/bmc/javaeditline/tarball/RELEASE
+    $ tar xf javaeditline.tar.gz
+
+Using *curl* and *tar*:
+
+    $ curl -L -o javaeditline.tar.gz https://api.github.com/repos/bmc/javaeditline/tarball/RELEASE
+    $ tar xf javaeditline.tar.gz
+
+If you prefer, you can download a zip file, instead. Just substitute "zipball"
+for "tarball" in the above commands.
+
+### Clone the Git repository
+
+  $ git clone git://github.com/bmc/javaeditline.git
+  $ cd javaeditline
+  $ git co RELEASE
+
 
 ## Restrictions
 
@@ -131,7 +146,7 @@ That should be all you need to do.
 **MAC OS X only**
 
 On Mac OS X, using `LD_LIBRARY_PATH` may not suffice. You may need to set
-`DYLD_LIBRARY_PATH`, instead. For instance, suppose you copied 
+`DYLD_LIBRARY_PATH`, instead. For instance, suppose you copied
 `libjavaeditline.jnilib` to `$HOME/lib`. You may need to add this environment
 variable, to get Java to see it:
 
