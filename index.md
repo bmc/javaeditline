@@ -176,5 +176,5 @@ request. Along with any patch you send:
   project under a [BSD License][license file].
 
 [GitHub repository]: http://github.com/bmc/javaeditline
-[license file]: license.html
+[license file]: https://github.com/bmc/javaeditline/blob/master/LICENSE.md
 
