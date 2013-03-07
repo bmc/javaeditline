@@ -20,7 +20,7 @@ Because I wanted to start fresh, with a new API.
 
 ---
 
-**What about [JLine][jline]? or [Jline2][jline2]**
+**What about [JLine][jline] or [Jline2][jline2]?**
 
 JLine is certainly useful, especially since it works on Unix-like systems
 and on Windows. However, it isn't as functionally complete as Editline. For
