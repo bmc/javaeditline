@@ -33,11 +33,13 @@ below.
 [Java Native Interface]: http://java.sun.com/docs/books/jni/
 
 There are two ways to get the source code. In the commands below, substitute
-the current release tag (**release-0.3**) for the string "RELEASE".
+the current release tag for the string "RELEASE".
+
+**The current release is: release-0.3**
 
 ### Download and unpack a tarball or zipball
 
-Using *wget* and *tar*
+Using *wget* and *tar*:
 
     $ wget -O javaeditline.tar.gz https://api.github.com/repos/bmc/javaeditline/tarball/RELEASE
     $ tar xf javaeditline.tar.gz
